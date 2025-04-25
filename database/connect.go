@@ -32,6 +32,11 @@ func ConnectDB() {
 	DB.AutoMigrate(
 		&model.Account{},
 		&model.Staff{},
+		&model.Customer{},
+		&model.Order{},
+		&model.OrderRevisionItem{},
+		&model.OrderRevisionInvoice{},
+		&model.OrderItem{},
 	)
 	fmt.Println("Database Migrated")
 

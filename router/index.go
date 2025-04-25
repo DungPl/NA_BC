@@ -23,7 +23,15 @@ func SetupRoutes(app *fiber.App) {
 	// authen.Post("/register")
 
 	// User
+
 	auth := v1.Group("/auth")
 	auth.Post("/login", handler.Login)
 	auth.Post("/refresh-token", handler.RefreshToken)
+
+	auth.Post("/changePss", handler.ChangePassword)
+	auth.Post("/addStaff", handler.AddStaff)
+	auth.Get("/getAllStaff", handler.GetAllStaff)
+	auth.Get("/getStaff/:id", handler.GetStaffByID)
+	auth.Put("/updateStaff/:id", handler.UpdateStaff)
+	auth.Delete("/deleteStaff/:id", handler.DeleteStaff)
 }

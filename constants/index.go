@@ -45,6 +45,7 @@ const (
 	// MONEY_REFUND_MUST_EQUAL_MONEY_ADVANCE         = "Số tiền hoàn ứng phải bằng số tiền đã ứng"
 	// DATA_INPUT_IS_NOT_ARRAY                       = "Dữ liệu truyền vào phải là mảng"
 	// SALARY_ADVANCE_IS_REFUND                      = "Đơn ứng lương đã được hoàn đủ"
+	REFRESH_TOKEN_NOT_FOUND = "Phiên đăng nhập bị lỗi "
 )
 
 var ROLE = []string{"ADMIN", "QUANLY", "KETOAN", "SALE"}
