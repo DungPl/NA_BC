@@ -23,6 +23,36 @@ func AddStaff(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request"})
 	}
+	// Kiểm tra username có trùng không
+	var existingAccount model.Account
+	if err := database.DB.Where("username = ?", req.Username).First(&existingAccount).Error; err == nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Username already exists",
+		})
+	}
+
+	// Kiểm tra email có trùng không
+	var existingStaff model.Staff
+	if err := database.DB.Where("email = ?", req.Email).First(&existingStaff).Error; err == nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Email already exists",
+		})
+	}
+	var existingPhone model.Staff
+	if err := database.DB.Where("phone_number =?", req.PhoneNumber).First(&existingPhone).Error; err == nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Phone already exists",
+		})
+	}
+	var existingIdentity model.Staff
+	if err := database.DB.Where("identification_card =?", req.IdentificationCard).First(&existingIdentity).Error; err == nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Identification Card already exists",
+		})
+	}
+	if len(req.IdentificationCard) != 12 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Identification Card is not active"})
+	}
 	// 1. Hash mật khẩu
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
