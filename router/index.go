@@ -34,7 +34,7 @@ func SetupRoutes(app *fiber.App) {
 
 	auth.Post("/changePss", handler.ChangePassword)
 
-	staff := v1.Group("/staff", middleware.Protected(), middleware.CheckAdmin)
+	staff := v1.Group("/staff", middleware.Protected(), middleware.CheckAdminHcns)
 	staff.Post("/addStaff", validate.CreateStaff(&fiber.Ctx{}), handler.CreateStaff)
 	staff.Get("/getAllStaff", handler.GetAllStaff)
 	staff.Get("/getStaffById/:staffId", handler.GetStaffById)

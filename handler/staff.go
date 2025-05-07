@@ -199,7 +199,7 @@ func GetAllStaff(c *fiber.Ctx) error {
 	}
 
 	// Query staff
-	query := db.Model(&model.Staff{})
+	query := db.Model(&model.Staff{}).Where("is_active = ?", true)
 
 	// Phân trang
 	var total int64
@@ -208,11 +208,6 @@ func GetAllStaff(c *fiber.Ctx) error {
 	if filter.SearchKey != "" {
 		key := "%" + strings.ToLower(filter.SearchKey) + "%"
 		query = query.Where("LOWER(name) LIKE ? OR LOWER(identification_card) LIKE ? OR LOWER(phone_number) LIKE ?", key, key, key)
-	}
-
-	// Lọc theo trạng thái is_active nếu có
-	if filter.IsActive != nil {
-		query = query.Where("is_active = ?", *filter.IsActive)
 	}
 	if err := query.Limit(filter.Limit).Offset(filter.Offset).Find(&staffs).Error; err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Lỗi lấy danh sách nhân viên", err)
