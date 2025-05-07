@@ -10,8 +10,8 @@ import (
 	"order-manager/model"
 	"order-manager/utils"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -182,7 +182,8 @@ func ChangePassword(c *fiber.Ctx) error {
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Database error"})
 	}
-	if account.Role != constants.ROLE_ADMIN {
+	var staff model.Staff
+	if staff.Position != constants.ROLE_ADMIN {
 		if input.OldPassword == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Old password is required"})
 		}

@@ -17,7 +17,7 @@ func SeedData(db *gorm.DB) {
 		HashPassword = "123456cn"
 	}
 	accounts := []model.Account{
-		{Username: "Administration", Password: HashPassword, Active: true},
+		{Username: "Administration", Password: HashPassword, Active: true, Role: constants.ROLE_ADMIN},
 	}
 
 	for _, account := range accounts {
@@ -32,7 +32,7 @@ func SeedData(db *gorm.DB) {
 
 	birthDay, _ := time.Parse("2006-01-02", "1994-04-17")
 	staffs := []model.Staff{
-		{Name: "Admin", BirthDay: birthDay, PhoneNumber: "0969013457", IdentificationCard: "027094000624", AccountId: &account.ID, Role: constants.ROLE_ADMIN},
+		{Name: "Admin", BirthDay: birthDay, PhoneNumber: "0969013457", IdentificationCard: "027094000624", AccountId: &account.ID, Position: constants.ROLE_ADMIN},
 	}
 
 	for _, staff := range staffs {

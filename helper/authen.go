@@ -12,8 +12,8 @@ import (
 	"order-manager/model"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -90,6 +90,15 @@ func ParseToken(tokenString string) (*jwt.Token, error) {
 //	}
 func GetInfoAccountFromToken(c *fiber.Ctx) (model.TokenClaim, bool, bool, bool) {
 	token := c.Locals("user").(*jwt.Token)
+	// user := c.Locals("user")
+	// if user == nil {
+	// 	return model.TokenClaim{}, false, false, false
+	// }
+
+	// token, ok := user.(*jwt.Token)
+	// if !ok {
+	// 	return model.TokenClaim{}, false, false, false
+	// }
 	tokenClaim := token.Claims.(jwt.MapClaims)
 	accountId := uint(tokenClaim["accountId"].(float64))
 	username := tokenClaim["username"].(string)
@@ -99,7 +108,7 @@ func GetInfoAccountFromToken(c *fiber.Ctx) (model.TokenClaim, bool, bool, bool) 
 	}
 	var account model.Account
 	db := database.DB
-	db.Preload("Role").First(&account, accountId)
-
+	//db.Preload("Role").First(&account, accountId)
+	db.First(&account, accountId)
 	return accountInfo, account.Role == constants.ROLE_ADMIN || account.Role == constants.ROLE_QUANLY, account.Role == constants.ROLE_KETOAN, account.Role == constants.ROLE_SALE
 }

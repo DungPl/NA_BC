@@ -8,7 +8,7 @@ type Account struct {
 	RefreshToken string `json:"refreshToken"`
 	Active       bool   `gorm:"not null;default:true" json:"active"`
 	Role         string `json:"role"`
-	// Staff        *Staff `gorm:"foreignKey:AccountId" json:"staff"`
+	Staff        *Staff `gorm:"foreignKey:AccountId" json:"staff"`
 }
 
 type Accounts []Account

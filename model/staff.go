@@ -15,11 +15,26 @@ type Staff struct {
 	Gender             string    `json:"gender"`
 	IsActive           bool      `gorm:"not null;default:true" json:"isActive"`
 	IdentificationCard string    `gorm:"not null;uniqueIndex;require" validate:"required,min=12,max=12" json:"identificationCard"`
-	Role               string    `json:"role"`
+	Position           string    `json:"position"`
 	StatusWorking      string    `json:"statusWorking"`
 	Note               string    `json:"note"`
 	AccountId          *uint     `json:"accountId"`
-	Account            *Account  `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"account"`
+	Account            Account   `gorm:"references:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"account"`
 }
-
+type UpdateStaffInput struct {
+	Name               string    `json:"name" validate:"required"`
+	PhoneNumber        string    `json:"phoneNumber"`
+	Email              string    `json:"email"`
+	IdentificationCard string    `json:"identificationCard" validate:"min=12,max=12"`
+	Address            string    `json:"address"`
+	AddressOrigin      string    `json:"addressOrigin"`
+	Gender             string    `json:"gender"`
+	Role               string    `json:"role"`
+	StatusWorking      string    `json:"statusWorking"`
+	Note               string    `json:"note"`
+	BirthDay           time.Time `json:"birthDay"`
+	Username           string    `json:"username"` // cho account
+	Position           string    `json:"position"` // role của account
+}
+type UpdateStaffInputs []UpdateStaffInput
 type Staffs []Staff

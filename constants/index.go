@@ -6,19 +6,19 @@ const (
 	ERROR_INTERNAL_ERROR = "Lỗi nội bộ máy chủ"
 	INVALID_USERNAME     = "Username không tìm thấy"
 	// ERROR_CREATE                                  = "Không thể thêm mới dữ liệu này"
-	// ERROR_EDIT                                    = "Chỉnh sửa thất bại"
-	INVALID_PASSWORD   = "Mật khẩu không đúng"
-	ACCOUNT_NOT_ACTIVE = "Tài khoản không được phép hoạt động"
-	// NOT_ADMIN                                     = "Chỉ tài khoản Admin được lấy dữ liệu này"
-	// ERROR_INPUT                                   = "Thiếu dữ liệu input yêu cầu"
-	// ERROR_PARSE_DATA_TO_LOCALS                    = "Dữ liệu truyền vào không đúng yêu cầu"
+	ERROR_EDIT                 = "Chỉnh sửa thất bại"
+	INVALID_PASSWORD           = "Mật khẩu không đúng"
+	ACCOUNT_NOT_ACTIVE         = "Tài khoản không được phép hoạt động"
+	NOT_ADMIN                  = "Chỉ tài khoản Admin được lấy dữ liệu này"
+	ERROR_INPUT                = "Thiếu dữ liệu input yêu cầu"
+	ERROR_PARSE_DATA_TO_LOCALS = "Dữ liệu truyền vào không đúng yêu cầu"
 	// ERROR_DATA_IS_ALSO                            = "Lỗi dữ liệu đồng thời tồn tại"
-	// DATA_INPUT_IS_NOT_NUMBER                      = "Dữ liệu truyền vào phải là số"
-	// DATA_INPUT_IS_NOT_BOOL                        = "Dữ liệu truyền vào phải là boolean"
+	DATA_INPUT_IS_NOT_NUMBER = "Dữ liệu truyền vào phải là số"
+	DATA_INPUT_IS_NOT_BOOL   = "Dữ liệu truyền vào phải là boolean"
 	// NEW_PASSWORD_NOT_SAME_REPEAT_PASSWORD         = "Mật khẩu mới và mật khẩu nhắc lại không trùng khớp"
 	// NEW_PASSWORD_SAME_CURRENT_PASSWORD            = "Mật khẩu mới không được trùng với mật khẩu hiện tại"
 	// CAN_NOT_HASH_PASSWORD                         = "Không thể mã hoá được mật khẩu"
-	// NOT_FOUND_RECORDS                             = "Không tìm thấy dữ liệu"
+	NOT_FOUND_RECORDS = "Không tìm thấy dữ liệu"
 	// IDENTIFICATION_CARD_EXISTS                    = "Số CCCD này đã được đăng kí"
 	// TAX_CODE_EXISTS                               = "Mã số thuế này đã được đăng kí"
 	// TAX_CODE_INVALID                              = "Mã số thuế phải gồm các số và có 10 hoặc 14 kí tự"
@@ -35,9 +35,9 @@ const (
 	// CAN_NOT_ADVANCE_FOR_STAFF_AND_EMPLOYEE        = "Không được ứng cho nhân viên hoặc công nhân trong 1 tiến trình"
 	// MISSING_STAFF_OR_EMPLOYEE_IN_ADVANCE          = "Phải chọn đối tượng là nhân viên hoặc công nhân trong 1 tiến trình"
 	// STATUS_WORKING_INVALID                        = "Trạng thái làm việc không tồn tại"
-	// TYPE_WORKING_INVALID                          = "Hình thức làm việc không tồn tại"
-	// TYPE_POSITION_INVALID                         = "Vị trí làm việc không tồn tại"
-	// GENDER_INVALID                                = "Giới tính không tồn tại"
+	TYPE_WORKING_INVALID  = "Hình thức làm việc không tồn tại"
+	TYPE_POSITION_INVALID = "Vị trí làm việc không tồn tại"
+	GENDER_INVALID        = "Giới tính không tồn tại"
 	// CAN_NOT_EDIT_SALARY_IS_PAYMENT                = "Không thể sửa bảng lương đã thanh toán"
 	// PERMISSION_INVALID                            = "Không có quyền thực hiện thao tác này"
 	// KEY_INVALID                                   = "Key tìm kiếm không được hỗ trợ"
@@ -53,6 +53,12 @@ var ROLE_ADMIN = "ADMIN"
 var ROLE_QUANLY = "QUANLY"
 var ROLE_KETOAN = "KETOAN"
 var ROLE_SALE = "SALE"
+
+var TYPE_WORKING = []string{"đang làm", "nghỉ phép ", "công tác ", "nghỉ việc"}
+
+var TYPE_POSITION = []string{"Nhân viên", "Công nhân", "Giám đốc", "Thư ký ", "Trưởng phòng", "Phó giám đốc", "Phó trưởng phòng"}
+
+var GENDER = []string{"Nam", "Nữ "}
 
 // var COLUMN_OF_KEY_FILTER_EMPLOYEE = map[string]string{
 // 	"code":               "code",
