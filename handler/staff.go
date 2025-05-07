@@ -7,6 +7,7 @@ import (
 	"order-manager/model"
 	"order-manager/utils"
 	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
@@ -177,4 +178,52 @@ func ActiveStaff(c *fiber.Ctx) error {
 	db.Save(&staff).Scan(&staff)
 
 	return utils.SuccessResponse(c, fiber.StatusOK, staff)
+}
+
+func GetAllStaff(c *fiber.Ctx) error {
+	db := database.DB
+	var staffs []model.Staff
+
+	// Lấy filter input từ query params
+	var filter model.FilterInput
+	if err := c.QueryParser(&filter); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Invalid pagination input", err)
+	}
+
+	// Thiết lập mặc định nếu chưa có
+	if filter.Limit == 0 {
+		filter.Limit = 10
+	}
+	if filter.Offset < 0 {
+		filter.Offset = 0
+	}
+
+	// Query staff
+	query := db.Model(&model.Staff{})
+
+	// Phân trang
+	var total int64
+	query.Count(&total)
+	// Tìm kiếm nếu có
+	if filter.SearchKey != "" {
+		key := "%" + strings.ToLower(filter.SearchKey) + "%"
+		query = query.Where("LOWER(name) LIKE ? OR LOWER(identification_card) LIKE ? OR LOWER(phone_number) LIKE ?", key, key, key)
+	}
+
+	// Lọc theo trạng thái is_active nếu có
+	if filter.IsActive != nil {
+		query = query.Where("is_active = ?", *filter.IsActive)
+	}
+	if err := query.Limit(filter.Limit).Offset(filter.Offset).Find(&staffs).Error; err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Lỗi lấy danh sách nhân viên", err)
+	}
+
+	return utils.SuccessResponse(c, fiber.StatusOK, fiber.Map{
+		"data": staffs,
+		"pagination": fiber.Map{
+			"total":  total,
+			"limit":  filter.Limit,
+			"offset": filter.Offset,
+		},
+	})
 }

@@ -36,7 +36,7 @@ func SetupRoutes(app *fiber.App) {
 
 	staff := v1.Group("/staff", middleware.Protected(), middleware.CheckAdmin)
 	staff.Post("/addStaff", validate.CreateStaff(&fiber.Ctx{}), handler.CreateStaff)
-	staff.Get("/getAllStaff", validate.GetAllStaff)
+	staff.Get("/getAllStaff", handler.GetAllStaff)
 	staff.Get("/getStaffById/:staffId", handler.GetStaffById)
 	staff.Put("/updateStaff/:staffId", validate.EditStaff("staffId"), handler.EditStaff)
 	staff.Delete("/deleteStaff/:staffId", validate.DeleteStaff("staffId"), handler.DeleteStaff)
