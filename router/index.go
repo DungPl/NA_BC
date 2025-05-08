@@ -31,14 +31,18 @@ func SetupRoutes(app *fiber.App) {
 	auth.Post("/refresh-token", handler.RefreshToken)
 	account := v1.Group("/account", logger.New())
 	account.Get("/", middleware.Protected(), handler.Me)
+	account.Post("/changePassword", validate.AdminChangePassword(&fiber.Ctx{}), handler.AdminChangePassword)
 
-	auth.Post("/changePss", handler.ChangePassword)
+	staffAdmin := v1.Group("/staff", middleware.Protected(), middleware.CheckAdminHcns)
 
-	staff := v1.Group("/staff", middleware.Protected(), middleware.CheckAdminHcns)
-	staff.Post("/addStaff", validate.CreateStaff(&fiber.Ctx{}), handler.CreateStaff)
-	staff.Get("/getAllStaff", handler.GetAllStaff)
-	staff.Get("/getStaffById/:staffId", handler.GetStaffById)
-	staff.Put("/updateStaff/:staffId", validate.EditStaff("staffId"), handler.EditStaff)
-	staff.Delete("/deleteStaff/:staffId", validate.DeleteStaff("staffId"), handler.DeleteStaff)
-	staff.Patch("/active/:staffId", validate.ActiveStaff(&fiber.Ctx{}), handler.ActiveStaff)
+	staffAdmin.Post("/addStaff", validate.CreateStaff(&fiber.Ctx{}), handler.CreateStaff)
+	staffAdmin.Get("/getAllStaff", handler.GetAllStaff)
+	staffAdmin.Get("/getStaffById/:staffId", handler.GetStaffById)
+	staffAdmin.Put("/updateStaff/:staffId", validate.EditStaff("staffId"), handler.EditStaff)
+	staffAdmin.Delete("/deleteStaff/:staffId", validate.DeleteStaff("staffId"), handler.DeleteStaff)
+	staffAdmin.Patch("/active/:staffId", validate.ActiveStaff(&fiber.Ctx{}), handler.ActiveStaff)
+
+	staff := v1.Group("/profile", middleware.Protected())
+
+	staff.Post("/changePassword", validate.StaffChangePassword(&fiber.Ctx{}), handler.StaffChangePassword)
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"order-manager/constants"
 	"order-manager/database"
+	"order-manager/helper"
 	"order-manager/model"
 	"order-manager/utils"
 	"strconv"
@@ -221,4 +222,28 @@ func GetAllStaff(c *fiber.Ctx) error {
 			"offset": filter.Offset,
 		},
 	})
+}
+func StaffChangePassword(c *fiber.Ctx) error {
+	// Lấy token từ header
+	db := database.DB
+	changePasswordInput, ok := c.Locals("staffChangePasswordInput").(model.ChangePasswordInput)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, constants.ERROR_PARSE_DATA_TO_LOCALS, errors.New("PARSE DATA TO LOCALS FAIL"))
+	}
+	dataInfo, _, _, _ := helper.GetInfoAccountFromToken(c)
+	accountId := dataInfo.AccountId
+	var account model.Account
+	db.First(&account, accountId)
+
+	if !helper.CheckPasswordHash(changePasswordInput.OldPassword, account.Password) {
+		return utils.ErrorResponseHaveKey(c, fiber.StatusBadRequest, constants.INVALID_PASSWORD, errors.New("currentPassword invalid"), "currentPassword")
+	}
+	newPasswordHash, err := helper.HashPassword(changePasswordInput.NewPassword)
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, constants.CAN_NOT_HASH_PASSWORD, err)
+	}
+	account.Password = newPasswordHash
+	db.Save(&account)
+
+	return utils.SuccessResponse(c, fiber.StatusOK, account)
 }

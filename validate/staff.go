@@ -150,3 +150,36 @@ func ActiveStaff(c *fiber.Ctx) fiber.Handler {
 		return c.Next()
 	}
 }
+func StaffChangePassword(c *fiber.Ctx) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var input model.ChangePasswordInput
+		// Parse JSON từ request body vào struct
+		if err := c.BodyParser(&input); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": fmt.Sprintf("Invalid input %s", err.Error()),
+			})
+		}
+		var validate = validator.New()
+		// Validate input
+		if err := validate.Struct(input); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		if input.OldPassword == input.NewPassword {
+			return utils.ErrorResponseHaveKey(c, fiber.StatusBadRequest, constants.NEW_PASSWORD_SAME_CURRENT_PASSWORD, errors.New("newPassword invalid"), "newPassword")
+		}
+		if input.NewPassword != input.ConfirmPassword {
+			return utils.ErrorResponseHaveKey(c, fiber.StatusBadRequest, constants.NEW_PASSWORD_NOT_SAME_REPEAT_PASSWORD, errors.New("repeatPassword invalid"), "repeatPassword")
+		}
+		if len(input.NewPassword) < 6 || len(input.NewPassword) > 50 {
+			return utils.ErrorResponseHaveKey(c, fiber.StatusBadRequest, constants.NEW_PASSWORD_LENGTH_INVALID, errors.New("Độ dài mật khẩu không phù hợp "), "newPassword")
+		}
+		// Save input to context locals
+		c.Locals("staffChangePasswordInput", input)
+
+		// Continue to next handler
+		return c.Next()
+	}
+}
