@@ -7,6 +7,7 @@ import (
 	"order-manager/helper"
 	"order-manager/model"
 	"order-manager/utils"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -24,20 +25,22 @@ func Me(c *fiber.Ctx) error {
 }
 
 func AdminChangePassword(c *fiber.Ctx) error {
-
+	staffIdParam := c.Params("staffId")
+	staffId, err := strconv.Atoi(staffIdParam)
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Invalid staff ID", err)
+	}
 	db := database.DB
 	changePasswordInput, ok := c.Locals("AdminChangePasswordInput").(model.ChangePasswordInput)
 	if !ok {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, constants.ERROR_PARSE_DATA_TO_LOCALS, errors.New("PARSE DATA TO LOCALS FAIL"))
 	}
-	dataInfo, _, _, _ := helper.GetInfoAccountFromToken(c)
-	accountId := dataInfo.AccountId
+	//dataInfo, _, _, _ := helper.GetInfoAccountFromToken(c)
 	var account model.Account
-	db.First(&account, accountId)
-
-	if !helper.CheckPasswordHash(changePasswordInput.OldPassword, account.Password) {
-		return utils.ErrorResponseHaveKey(c, fiber.StatusBadRequest, constants.INVALID_PASSWORD, errors.New("currentPassword invalid"), "currentPassword")
+	if err := db.First(&account, staffId).Error; err != nil {
+		return utils.ErrorResponse(c, fiber.StatusNotFound, "Account not found", err)
 	}
+
 	newPasswordHash, err := helper.HashPassword(changePasswordInput.NewPassword)
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, constants.CAN_NOT_HASH_PASSWORD, err)

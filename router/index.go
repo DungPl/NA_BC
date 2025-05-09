@@ -31,7 +31,7 @@ func SetupRoutes(app *fiber.App) {
 	auth.Post("/refresh-token", handler.RefreshToken)
 	account := v1.Group("/account", logger.New())
 	account.Get("/", middleware.Protected(), handler.Me)
-	account.Post("/changePassword", validate.AdminChangePassword(&fiber.Ctx{}), handler.AdminChangePassword)
+	account.Post("/changePassword/:staffId", validate.AdminChangePassword(&fiber.Ctx{}), handler.AdminChangePassword)
 
 	staffAdmin := v1.Group("/staff", middleware.Protected(), middleware.CheckAdminHcns)
 
