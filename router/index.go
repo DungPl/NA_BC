@@ -49,4 +49,6 @@ func SetupRoutes(app *fiber.App) {
 	customer := v1.Group("/customer", middleware.Protected(), middleware.AuthSale)
 	customer.Get("/getCustomer", handler.GetAllCustomer)
 	customer.Post("/addCustomer", validate.CreateCustomer(&fiber.Ctx{}), handler.CreateCustomer)
+	customer.Put("/updateCustomer/:customerId", validate.EditCustomer("customerId"), handler.EditCustomer)
+	customer.Delete("deleteCustomer/:customerId", validate.DeleteCustomer("customerId"), handler.DeleteCustomer)
 }
