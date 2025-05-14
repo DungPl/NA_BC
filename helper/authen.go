@@ -90,15 +90,7 @@ func ParseToken(tokenString string) (*jwt.Token, error) {
 //	}
 func GetInfoAccountFromToken(c *fiber.Ctx) (model.TokenClaim, bool, bool, bool) {
 	token := c.Locals("user").(*jwt.Token)
-	// user := c.Locals("user")
-	// if user == nil {
-	// 	return model.TokenClaim{}, false, false, false
-	// }
 
-	// token, ok := user.(*jwt.Token)
-	// if !ok {
-	// 	return model.TokenClaim{}, false, false, false
-	// }
 	tokenClaim := token.Claims.(jwt.MapClaims)
 	accountId := uint(tokenClaim["accountId"].(float64))
 	username := tokenClaim["username"].(string)

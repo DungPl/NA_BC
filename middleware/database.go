@@ -44,3 +44,12 @@ func CheckAdminHcns(c *fiber.Ctx) error {
 	return c.Next()
 
 }
+func AuthSale(c *fiber.Ctx) error {
+	_, isAdmin, _, isSale := helper.GetInfoAccountFromToken(c)
+	if !isSale && !isAdmin {
+		return utils.ErrorResponse(c, fiber.StatusForbidden, constants.ERROR_PERMISSION_DENIED, errors.New("only Sale or Admin can perform this action"))
+	}
+
+	return c.Next()
+
+}

@@ -20,10 +20,12 @@ const (
 	CAN_NOT_HASH_PASSWORD                 = "Không thể mã hoá được mật khẩu"
 	NEW_PASSWORD_LENGTH_INVALID           = "Mật khẩu mới không phù hợp với yêu cầu"
 	NOT_FOUND_RECORDS                     = "Không tìm thấy dữ liệu"
-	// IDENTIFICATION_CARD_EXISTS                    = "Số CCCD này đã được đăng kí"
+	IDENTIFICATION_CARD_EXISTS            = "Số CCCD này đã được đăng kí"
+	EMAIL_EXISTS                          = "Email này đã được đăng kí "
+	ERROR_PERMISSION_DENIED               = "Bạn không có quyền truy cập vào dữ liệu này"
 	// TAX_CODE_EXISTS                               = "Mã số thuế này đã được đăng kí"
 	// TAX_CODE_INVALID                              = "Mã số thuế phải gồm các số và có 10 hoặc 14 kí tự"
-	// PHONE_NUMBER_EXISTS                           = "Số điện thoại này đã được đăng kí"
+	PHONE_NUMBER_EXISTS = "Số điện thoại này đã được đăng kí"
 	// STAFF_CANNOT_CREATE_WAITING_ACCEPT_ON_REFUND  = "Nhân viên không thể tạo đơn hoàn lương với trạng thái khác chờ duyệt"
 	// STAFF_CANNOT_REFUND                           = "Nhân viên không thể hoàn lương"
 	// TOTAL_MONEY_REFUND_CANNOT_GREATER_THAN_TOTAL  = "Số tiền hoàn ứng lương không được lớn hơn số tiền đã ứng còn lại"
@@ -47,6 +49,7 @@ const (
 	// DATA_INPUT_IS_NOT_ARRAY                       = "Dữ liệu truyền vào phải là mảng"
 	// SALARY_ADVANCE_IS_REFUND                      = "Đơn ứng lương đã được hoàn đủ"
 	REFRESH_TOKEN_NOT_FOUND = "Phiên đăng nhập bị lỗi "
+	//
 )
 
 var ROLE = []string{"ADMIN", "QUANLY", "KETOAN", "SALE"}
@@ -57,7 +60,7 @@ var ROLE_SALE = "SALE"
 
 var TYPE_WORKING = []string{"đang làm", "nghỉ phép ", "công tác ", "nghỉ việc"}
 
-var TYPE_POSITION = []string{"Nhân viên", "Công nhân", "Giám đốc", "Thư ký ", "Trưởng phòng", "Phó giám đốc", "Phó trưởng phòng"}
+var TYPE_POSITION = []string{"Nhân viên", "Công nhân", "Giám đốc", "QUANLY", "KETOAN", "SALE", "Thư ký ", "Trưởng phòng", "Phó giám đốc", "Phó trưởng phòng"}
 
 var GENDER = []string{"Nam", "Nữ "}
 
