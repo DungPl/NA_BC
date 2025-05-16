@@ -268,8 +268,8 @@ func TranferManager(c *fiber.Ctx) error {
 			"error": "You are not authorized to transfer this customer",
 		})
 	}
+	//Kiểm tra role của account
 	newManagerIdUint := input.NewManagerId
-	// Kiểm tra tài khoản quản lý mới
 	var newManager model.Account
 	if err := tx.First(&newManager, newManagerIdUint).Error; err != nil {
 		tx.Rollback()
@@ -277,24 +277,24 @@ func TranferManager(c *fiber.Ctx) error {
 			"error": "New manager account not found",
 		})
 	}
+	if newManager.Role != "SALE" {
+		tx.Rollback()
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Only Sale account",
+		})
+	}
+	// Kiểm tra tài khoản quản lý mới
+
 	// Cập nhật ManagerId
 
 	customer.ManagerId = &newManagerIdUint
 	fmt.Printf("Before Save: Customer ID: %d, ManagerId: %v\n", customer.ID, *customer.ManagerId)
-	// if err := tx.Model(&customer).Updates(map[string]interface{}{
-	// 	"manager_id": newManagerIdUint,
-	// }).Error; err != nil {
-	// 	tx.Rollback()
-	// 	fmt.Printf("Update Error: %v\n", err)
-	// 	return utils.ErrorResponse(c, fiber.StatusInternalServerError, constants.ERROR_EDIT, err)
-	// }
 	if err := tx.Model(&model.Customer{}).
 		Where("id = ?", customer.ID).
 		Update("manager_id", newManagerIdUint).Error; err != nil {
 		tx.Rollback()
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, constants.ERROR_EDIT, err)
 	}
-
 	// Reload customer with new data
 	if err := tx.Preload("ManageAccount").First(&customer, customer.ID).Error; err != nil {
 		tx.Rollback()
