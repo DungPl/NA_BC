@@ -228,3 +228,90 @@ func DeleteCustomer(c *fiber.Ctx) error {
 		"message": "Customer deleted successfully",
 	})
 }
+func TranferManager(c *fiber.Ctx) error {
+	dataInfo, _, _, _ := helper.GetInfoAccountFromToken(c)
+	customerId, ok := c.Locals("customerId").(int)
+	if !ok || customerId <= 0 {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, constants.DATA_INPUT_IS_NOT_NUMBER, errors.New("invalid customer ID"))
+	}
+	// Parse body với accountId là chuỗi
+	var input struct {
+		NewManagerId uint `json:"accountId" validate:"required"`
+	}
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": fmt.Sprintf("Invalid input: %s", err.Error()),
+		})
+	}
+
+	db := database.DB
+	tx := db.Begin()
+	// Kiểm tra tài khoản hiện tại
+	var account model.Account
+	if err := tx.First(&account, dataInfo.AccountId).Error; err != nil {
+		tx.Rollback()
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Account not found",
+		})
+	}
+	// Lấy customer
+	var customer model.Customer
+	if err := tx.Preload("ManageAccount").First(&customer, customerId).Error; err != nil {
+		tx.Rollback()
+		return utils.ErrorResponse(c, fiber.StatusNotFound, constants.NOT_FOUND_RECORDS, err)
+	}
+
+	// Kiểm tra quyền
+	if customer.ManagerId == nil || *customer.ManagerId != dataInfo.AccountId {
+		tx.Rollback()
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "You are not authorized to transfer this customer",
+		})
+	}
+	newManagerIdUint := input.NewManagerId
+	// Kiểm tra tài khoản quản lý mới
+	var newManager model.Account
+	if err := tx.First(&newManager, newManagerIdUint).Error; err != nil {
+		tx.Rollback()
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "New manager account not found",
+		})
+	}
+	// Cập nhật ManagerId
+
+	customer.ManagerId = &newManagerIdUint
+	fmt.Printf("Before Save: Customer ID: %d, ManagerId: %v\n", customer.ID, *customer.ManagerId)
+	// if err := tx.Model(&customer).Updates(map[string]interface{}{
+	// 	"manager_id": newManagerIdUint,
+	// }).Error; err != nil {
+	// 	tx.Rollback()
+	// 	fmt.Printf("Update Error: %v\n", err)
+	// 	return utils.ErrorResponse(c, fiber.StatusInternalServerError, constants.ERROR_EDIT, err)
+	// }
+	if err := tx.Model(&model.Customer{}).
+		Where("id = ?", customer.ID).
+		Update("manager_id", newManagerIdUint).Error; err != nil {
+		tx.Rollback()
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, constants.ERROR_EDIT, err)
+	}
+
+	// Reload customer with new data
+	if err := tx.Preload("ManageAccount").First(&customer, customer.ID).Error; err != nil {
+		tx.Rollback()
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Không thể load lại customer", err)
+	}
+
+	// Kiểm tra lại
+	fmt.Printf("After Save: Customer ID: %d, ManagerId: %v\n", customer.ID, *customer.ManagerId)
+
+	if err := tx.Commit().Error; err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Commit thất bại", err)
+	}
+
+	//fmt.Printf("After Save: Customer ID: %d, ManagerId: %v\n", customer.ID, *customer.ManagerId)
+	return utils.SuccessResponse(c, fiber.StatusOK, fiber.Map{
+		"message": "Customer transferred successfully",
+		"data":    customer,
+	})
+
+}

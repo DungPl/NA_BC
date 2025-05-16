@@ -26,6 +26,7 @@ require (
 
 require (
 	github.com/andybalholm/brotli v1.1.0 // indirect
+	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/go-playground/validator/v10 v10.26.0
 	github.com/gofiber/contrib/jwt v1.1.1
 	github.com/gofiber/jwt/v3 v3.3.10

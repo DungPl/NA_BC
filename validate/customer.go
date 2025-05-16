@@ -98,7 +98,29 @@ func DeleteCustomer(key string) fiber.Handler {
 		// Kiểm tra tồn tại
 		var customer model.Customer
 		if err := db.First(&customer, customerId).Error; err != nil {
-			return utils.ErrorResponse(c, fiber.StatusNotFound, "Staff not found", err)
+			return utils.ErrorResponse(c, fiber.StatusNotFound, "Customer not found", err)
+		}
+
+		c.Locals("customerId", customerId)
+		return c.Next()
+
+	}
+}
+func TranferManager(key string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		params := c.Params(key)
+
+		customerId, err := strconv.Atoi(params)
+		if err != nil {
+			return utils.ErrorResponse(c, fiber.StatusBadRequest, "Invalid customer ID", err)
+		}
+
+		db := database.DB
+
+		// Kiểm tra tồn tại
+		var customer model.Customer
+		if err := db.First(&customer, customerId).Error; err != nil {
+			return utils.ErrorResponse(c, fiber.StatusNotFound, "Customer not found", err)
 		}
 
 		c.Locals("customerId", customerId)

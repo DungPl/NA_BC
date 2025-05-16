@@ -10,7 +10,7 @@ type Customer struct {
 	Gender        string  `json:"gender"`
 	Note          string  `json:"note"`
 	IsActive      bool    `json:"isActive"`
-	ManagerId     *uint   ` json:"accountId"` // Tài khoản quản lý (người Sale)
+	ManagerId     *uint   `gorm:"column:manager_id"  json:"accountId"` // Tài khoản quản lý (người Sale)
 	ManageAccount Account `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;foreignKey:ManagerId; references:id;" json:"account"`
 }
 type Customers []Customer

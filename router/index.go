@@ -51,4 +51,5 @@ func SetupRoutes(app *fiber.App) {
 	customer.Post("/addCustomer", validate.CreateCustomer(&fiber.Ctx{}), handler.CreateCustomer)
 	customer.Put("/updateCustomer/:customerId", validate.EditCustomer("customerId"), handler.EditCustomer)
 	customer.Delete("deleteCustomer/:customerId", validate.DeleteCustomer("customerId"), handler.DeleteCustomer)
+	customer.Patch("/tranfer/:customerId", validate.TranferManager("customerId"), handler.TranferManager)
 }

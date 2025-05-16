@@ -60,7 +60,7 @@ var ROLE_SALE = "SALE"
 
 var TYPE_WORKING = []string{"đang làm", "nghỉ phép ", "công tác ", "nghỉ việc"}
 
-var TYPE_POSITION = []string{"Nhân viên", "Công nhân", "Giám đốc", "QUANLY", "KETOAN", "SALE", "Thư ký ", "Trưởng phòng", "Phó giám đốc", "Phó trưởng phòng"}
+var TYPE_POSITION = []string{"Nhân viên", "Công nhân", "Giám đốc", "Thư ký ", "Trưởng phòng", "Phó giám đốc", "Phó trưởng phòng"}
 
 var GENDER = []string{"Nam", "Nữ "}
 
