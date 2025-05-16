@@ -52,4 +52,9 @@ func SetupRoutes(app *fiber.App) {
 	customer.Put("/updateCustomer/:customerId", validate.EditCustomer("customerId"), handler.EditCustomer)
 	customer.Delete("deleteCustomer/:customerId", validate.DeleteCustomer("customerId"), handler.DeleteCustomer)
 	customer.Patch("/tranfer/:customerId", validate.TranferManager("customerId"), handler.TranferManager)
+	order := v1.Group("/order", middleware.Protected(), middleware.AuthSale)
+	// order.Get("/getOrder", handler.GetOrder)
+	order.Post("/createOrderDraft", validate.CreateOrder(&fiber.Ctx{}), handler.CreateOrder)
+	order.Patch("/sendOrder/:orderId", validate.SendOrder("orderId"), handler.SendOrder)
+	//order.Put("/editOrder/:orderId", validate.EditDraftOrder("orderId"), handler.EditDraftOrder)
 }

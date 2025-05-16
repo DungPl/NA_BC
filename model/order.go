@@ -30,3 +30,20 @@ type Order struct {
 	ProductionStatus *string `json:"prodStatus"` // Trạng thái sản xuất
 	OrderItems       []OrderItem
 }
+type Orders []Order
+type InputDraftOrder struct {
+	OrderDate    string  `json:"orderDate" `
+	CustomerId   *uint   `json:"customerId" validate:"required"`
+	CustomerName string  `json:"customerName" validate:"required"`
+	PhoneNumber  string  `json:"phoneNumber" validate:"required"`
+	Address      string  `json:"address"`
+	Discount     float64 `json:"discount" validate:"gte=0"`
+	OrderItems   *[]struct {
+		Name      string   `json:"name" validate:"required"`
+		Size      *float64 `json:"size" validate:"gte=0"`
+		Quantity  *int     `json:"quantity" validate:"gt=0"`
+		Unit      *string  `json:"unit" validate:"required,oneof=wig bundles pieces kg"`
+		UnitPrice *float64 `json:"unitPrice" validate:"gt=0"`
+	} `json:"orderItems" validate:"required,dive"`
+}
+type InputDraftOrders []InputDraftOrder
