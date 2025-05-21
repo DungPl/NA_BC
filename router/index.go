@@ -52,9 +52,17 @@ func SetupRoutes(app *fiber.App) {
 	customer.Put("/updateCustomer/:customerId", validate.EditCustomer("customerId"), handler.EditCustomer)
 	customer.Delete("deleteCustomer/:customerId", validate.DeleteCustomer("customerId"), handler.DeleteCustomer)
 	customer.Patch("/tranfer/:customerId", validate.TranferManager("customerId"), handler.TranferManager)
+
 	order := v1.Group("/order", middleware.Protected(), middleware.AuthSale)
 	// order.Get("/getOrder", handler.GetOrder)
 	order.Post("/createOrderDraft", validate.CreateOrder(&fiber.Ctx{}), handler.CreateOrder)
 	order.Patch("/sendOrder/:orderId", validate.SendOrder("orderId"), handler.SendOrder)
-	//order.Put("/editOrder/:orderId", validate.EditDraftOrder("orderId"), handler.EditDraftOrder)
+	order.Put("/editOrder/:orderId", validate.EditDraftOrder("orderId"), handler.EditDraftOrder)
+	order.Patch("/deleteDraftOrder/:orderId", validate.DeleteDraftOrder("orderId"), handler.DeleteDraftOrder)
+	order.Get("previewDraftOrder/:orderId", validate.DeleteDraftOrder("orderId"), handler.PreviewDraftOrder)
+	order.Get("downloadDraftOrder/:orderId", validate.DeleteDraftOrder("orderId"), handler.DownloadDraftOrder)
+	order.Patch("cancelOrder/:orderId", validate.DeleteDraftOrder("orderId"), handler.CancelDraftOrder)
+
+	//orderAdmin := v1.Group("/orderAdmin", middleware.Protected(), middleware.CheckAdmin)
+
 }
