@@ -54,15 +54,19 @@ func SetupRoutes(app *fiber.App) {
 	customer.Patch("/tranfer/:customerId", validate.TranferManager("customerId"), handler.TranferManager)
 
 	order := v1.Group("/order", middleware.Protected(), middleware.AuthSale)
-	// order.Get("/getOrder", handler.GetOrder)
+
 	order.Post("/createOrderDraft", validate.CreateOrder(&fiber.Ctx{}), handler.CreateOrder)
 	order.Patch("/sendOrder/:orderId", validate.SendOrder("orderId"), handler.SendOrder)
 	order.Put("/editOrder/:orderId", validate.EditDraftOrder("orderId"), handler.EditDraftOrder)
-	order.Patch("/deleteDraftOrder/:orderId", validate.DeleteDraftOrder("orderId"), handler.DeleteDraftOrder)
+	order.Delete("/deleteDraftOrder/:orderId", validate.DeleteDraftOrder("orderId"), handler.DeleteDraftOrder)
 	order.Get("previewDraftOrder/:orderId", validate.DeleteDraftOrder("orderId"), handler.PreviewDraftOrder)
 	order.Get("downloadDraftOrder/:orderId", validate.DeleteDraftOrder("orderId"), handler.DownloadDraftOrder)
 	order.Patch("cancelOrder/:orderId", validate.DeleteDraftOrder("orderId"), handler.CancelDraftOrder)
+	order.Patch("updateStatusOrder/:orderId", validate.UpdateStatusOrder("orderId"), handler.UpdateStatusOrder)
+	order.Post("createInvoice/:orderId", validate.CreateEditInvoice("orderId"), handler.CreateEditInvoice)
 
-	//orderAdmin := v1.Group("/orderAdmin", middleware.Protected(), middleware.CheckAdmin)
+	orderAdmin := v1.Group("/Admin", middleware.Protected(), middleware.CheckAdmin)
+	orderAdmin.Patch("/insertOrder/:orderId", validate.AdminEditOrder("orderId"), handler.AdminEditOrder)
+	orderAdmin.Patch("/updateRevision/:revisionInvoiceId", validate.UpdateRevisionStatus("revisionInvoiceId"), handler.UpdateRevisionStatus)
 
 }
