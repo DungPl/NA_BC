@@ -208,15 +208,6 @@ func UpdateRevisionStatus(c *fiber.Ctx) error {
 			}
 		}
 	}
-
-	if input.FactoryShipRevisionAt != nil && input.RevisionStatus != "Đang giao hàng" && input.RevisionStatus != "Đã đóng gói - chờ giao" {
-		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Factory ship revision date is only allowed when revision status is 'Đang giao hàng' or 'Đã đóng gói - chờ giao'", errors.New("Ngày xưởng giao lại chỉ được cập nhật khi trạng thái sửa đơn là 'Đang giao hàng' hoặc 'Đã đóng gói - chờ giao'"))
-	}
-	if input.FactoryShipRevisionAt != nil && *input.FactoryShipRevisionAt != "" {
-		if input.RevisionStatus != "Đang giao hàng" && input.RevisionStatus != "Đã đóng gói - chờ giao" {
-			return utils.ErrorResponse(c, fiber.StatusBadRequest, "Factory ship revision date requires revision status to be 'Đang giao hàng' or 'Đã đóng gói - chờ giao'", errors.New("Ngày xưởng giao lại chỉ được cập nhật khi trạng thái sửa đơn là 'Đang giao hàng' hoặc 'Đã đóng gói - chờ giao'"))
-		}
-	}
 	db := database.DB
 	tx := db.Begin()
 	if tx.Error != nil {
@@ -249,21 +240,65 @@ func UpdateRevisionStatus(c *fiber.Ctx) error {
 	} else {
 		revisionInvoice.RevisionProductStatus = ""
 	}
+	currentDate := time.Now().In(time.FixedZone("ICT", 7*60*60)) // 2025-05-23 00:00:00 +07:00
 
-	// Cập nhật FactoryRevisionShipAt chỉ khi trạng thái đúng
-	if input.FactoryShipRevisionAt != nil && *input.FactoryShipRevisionAt != "" {
-		if input.RevisionStatus == "Đang giao hàng" || input.RevisionStatus == "Đã đóng gói - chờ giao" {
-			parsedTime, err := time.Parse(time.RFC3339, *input.FactoryShipRevisionAt)
+	var factoryReceiveRevisionAt *time.Time
+	if input.RevisionStatus == "Đã nhận hàng cần sửa" {
+		if input.FactoryReceiveRevisionAt != nil && *input.FactoryReceiveRevisionAt != "" {
+			parsedDate, err := time.ParseInLocation("2006-01-02", *input.FactoryReceiveRevisionAt, time.FixedZone("ICT", 7*60*60))
 			if err != nil {
-				return utils.ErrorResponse(c, fiber.StatusBadRequest, "Invalid FactoryShipRevisionAt format", err)
+				return utils.ErrorResponse(c, fiber.StatusBadRequest, "Invalid factory receive revision date format, expected YYYY-MM-DD", err)
 			}
-			revisionInvoice.FactoryRevisionShipAt = &parsedTime
+			if parsedDate.Before(currentDate) {
+				return utils.ErrorResponse(c, fiber.StatusBadRequest, "Factory receive revision date cannot be in the past", errors.New("Ngày xưởng nhận đơn sửa không được ở quá khứ"))
+			}
+			factoryReceiveRevisionAt = &parsedDate
 		} else {
-			return utils.ErrorResponse(c, fiber.StatusBadRequest, "Không thể cập nhật ngày giao nếu trạng thái không phải 'Đang giao hàng' hoặc 'Đã đóng gói - chờ giao'", errors.New("Trạng thái đơn không hợp lệ để cập nhật ngày giao"))
+			// Auto-set to current date if no input provided
+			factoryReceiveRevisionAt = &currentDate
 		}
+	} else if input.FactoryReceiveRevisionAt != nil && *input.FactoryReceiveRevisionAt != "" {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Factory receive revision date requires revision status to be 'Đã nhận hàng cần sửa'", errors.New("Ngày xưởng nhận đơn sửa chỉ được cập nhật khi trạng thái là 'Đã nhận hàng cần sửa'"))
+	}
+
+	var factoryShipRevisionAt *time.Time
+	if input.RevisionStatus == "Đang giao hàng" || input.RevisionStatus == "Đã đóng gói - chờ giao" {
+		if input.FactoryShipRevisionAt != nil && *input.FactoryShipRevisionAt != "" {
+			parsedDate, err := time.ParseInLocation("2006-01-02", *input.FactoryShipRevisionAt, time.FixedZone("ICT", 7*60*60))
+			if err != nil {
+				return utils.ErrorResponse(c, fiber.StatusBadRequest, "Invalid factory ship revision date format, expected YYYY-MM-DD", err)
+			}
+			if parsedDate.Before(currentDate) {
+				return utils.ErrorResponse(c, fiber.StatusBadRequest, "Factory ship revision date cannot be in the past", errors.New("Ngày xưởng giao lại không được ở quá khứ"))
+			}
+			factoryShipRevisionAt = &parsedDate
+		} else if input.RevisionStatus == "Đang giao hàng" {
+			// Auto-set to current date if no input provided and status is "Đang giao hàng"
+			factoryShipRevisionAt = &currentDate
+		}
+	} else if input.FactoryShipRevisionAt != nil && *input.FactoryShipRevisionAt != "" {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Factory ship revision date requires revision status to be 'Đang giao hàng' or 'Đã đóng gói - chờ giao'", errors.New("Ngày xưởng giao lại chỉ được cập nhật khi trạng thái sửa đơn là 'Đang giao hàng' hoặc 'Đã đóng gói - chờ giao'"))
+	}
+
+	if factoryReceiveRevisionAt != nil {
+		revisionInvoice.FactoryReceiveRevisionAt = factoryReceiveRevisionAt
+	}
+	revisionInvoice.RevisionStatus = input.RevisionStatus
+	if input.RevisionProductionStatus != nil && *input.RevisionProductionStatus != "" {
+		revisionInvoice.RevisionProductStatus = *input.RevisionProductionStatus
 	} else {
+		revisionInvoice.RevisionProductStatus = ""
+	}
+	if factoryReceiveRevisionAt != nil {
+		revisionInvoice.FactoryReceiveRevisionAt = factoryReceiveRevisionAt
+	}
+	if factoryShipRevisionAt != nil {
+		revisionInvoice.FactoryRevisionShipAt = factoryShipRevisionAt
+	} else if input.RevisionStatus != "Đang giao hàng" && input.RevisionStatus != "Đã đóng gói - chờ giao" {
+		// Only clear FactoryShipRevisionAt if status is not eligible
 		revisionInvoice.FactoryRevisionShipAt = nil
 	}
+
 	// Save revision invoice
 	if err := tx.Save(&revisionInvoice).Error; err != nil {
 		tx.Rollback()
