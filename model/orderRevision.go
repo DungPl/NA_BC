@@ -23,3 +23,19 @@ type InputRevisionStatus struct {
 	RevisionProductionStatus *string `json:"revisionProductionStatus"`
 	FactoryShipRevisionAt    *string `json:"factoryShipRevisionAt"`
 }
+type RevisionInvoiceResponse struct {
+	ID                       uint      `json:"id"`
+	OrderCode                string    `json:"orderCode"`
+	CustomerName             string    `json:"customerName"`
+	CustomerPhone            string    `json:"customerPhone"`
+	RequestDate              time.Time `json:"requestDate"`
+	Reason                   string    `json:"reason"`
+	RevisionStatus           *string   `json:"revisionStatus"`
+	RevisionProductionStatus *string   `json:"revisionProductionStatus"`
+}
+type StatisticsResponse struct {
+	TotalOrders     int `json:"totalOrders"`
+	CanceledOrders  int `json:"canceledOrders"`
+	ProducingOrders int `json:"producingOrders"`
+	ShippedOrders   int `json:"shippedOrders"`
+}

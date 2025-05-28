@@ -8,6 +8,8 @@ import (
 	"order-manager/helper"
 	"order-manager/model"
 	"order-manager/utils"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -309,5 +311,119 @@ func UpdateRevisionStatus(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message":         "Revision status updated successfully",
 		"revisionInvoice": revisionInvoice,
+	})
+}
+func ListOrder(c *fiber.Ctx) error {
+	filter, ok := c.Locals("filter").(model.OrderFilter)
+	if !ok {
+		fmt.Printf("EditDraftOrder: Failed to parse inputOrderDraft\n")
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, constants.ERROR_PARSE_DATA_TO_LOCALS, errors.New("failed to parse inputOrderDraft from locals"))
+	}
+	db := database.DB
+
+	query := db.Model(&model.Order{})
+
+	// Apply filters
+	if filter.OrderCode != nil && *filter.OrderCode != "" {
+		query = query.Where("order_code ILIKE ?", "%"+*filter.OrderCode+"%")
+	}
+	if filter.CustomerName != nil && *filter.CustomerName != "" {
+		query = query.Where("customer_name ILIKE ?", "%"+*filter.CustomerName+"%")
+	}
+	if filter.CustomerPhone != nil && *filter.CustomerPhone != "" {
+		query = query.Where("customer_phone ILIKE ?", "%"+*filter.CustomerPhone+"%")
+	}
+	if filter.TimeFilter != nil {
+		var startDate, endDate time.Time
+		now := time.Now()
+		timeFilter := *filter.TimeFilter
+
+		if strings.HasPrefix(timeFilter, "month:") {
+			monthStr := strings.TrimPrefix(timeFilter, "month:")
+			month, err := strconv.Atoi(monthStr)
+			if err != nil || month < 1 || month > 12 {
+				return utils.ErrorResponse(c, fiber.StatusBadRequest, "Invalid month format", err)
+			}
+
+			startDate = time.Date(now.Year(), time.Month(month), 1, 0, 0, 0, 0, now.Location())
+
+			endDate = startDate.AddDate(0, 1, 0)
+			// return c.JSON(fiber.Map{
+			// 	"end":   endDate,
+			// 	"start": startDate,
+			// })
+		} else if strings.HasPrefix(timeFilter, "quarter:") {
+			qStr := strings.TrimPrefix(timeFilter, "quarter:")
+			quarter, err := strconv.Atoi(qStr)
+			if err != nil || quarter < 1 || quarter > 4 {
+				return utils.ErrorResponse(c, fiber.StatusBadRequest, "Invalid quarter format", err)
+			}
+			month := (quarter-1)*3 + 1
+			startDate = time.Date(now.Year(), time.Month(month), 1, 0, 0, 0, 0, now.Location())
+			endDate = startDate.AddDate(0, 3, 0)
+			// return c.JSON(fiber.Map{
+			// 	"end":   endDate,
+			// 	"start": startDate,
+			// })
+		} else if strings.HasPrefix(timeFilter, "year:") {
+			yearStr := strings.TrimPrefix(timeFilter, "year:")
+			year, err := strconv.Atoi(yearStr)
+			if err != nil {
+				return utils.ErrorResponse(c, fiber.StatusBadRequest, "Invalid year format", err)
+			}
+			startDate = time.Date(year, 1, 1, 0, 0, 0, 0, now.Location())
+			endDate = time.Date(year+1, 1, 1, 0, 0, 0, 0, now.Location())
+			// return c.JSON(fiber.Map{
+			// 	"end":   endDate,
+			// 	"start": startDate,
+			// })
+		} else if timeFilter == "lastYear" {
+			lastYear := now.Year() - 1
+			startDate = time.Date(lastYear, 1, 1, 0, 0, 0, 0, now.Location())
+			endDate = time.Date(lastYear+1, 1, 1, 0, 0, 0, 0, now.Location())
+
+		} else if timeFilter == "thisYear" {
+			year := now.Year()
+			startDate = time.Date(year, 1, 1, 0, 0, 0, 0, now.Location())
+			endDate = time.Date(year+1, 1, 1, 0, 0, 0, 0, now.Location())
+
+		} else {
+			return utils.ErrorResponse(c, fiber.StatusBadRequest, "Invalid time filter", nil)
+		}
+
+		query = query.Where("order_date >= ? AND order_date < ?", startDate, endDate)
+	}
+
+	var orders []model.Order
+	if err := query.Find(&orders).Error; err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Failed to fetch orders", err)
+	}
+
+	//var OrderResponse model.OrderResponse
+	// Prepare response
+	response := make([]model.OrderResponse, len(orders))
+	for i, order := range orders {
+		response[i] = model.OrderResponse{
+			ID:               order.ID,
+			OrderCode:        order.OrderCode,
+			CustomerName:     order.CustomerName,
+			CustomerPhone:    order.PhoneNumber,
+			Address:          order.Address,
+			OrderDate:        order.OrderDate,
+			Status:           order.Status,
+			ProductionStatus: order.ProductionStatus,
+		}
+	}
+
+	// Calculate statistics
+	var stats model.OrderStatisticsResponse
+	db.Model(&model.Order{}).Count(&stats.TotalOrders)
+	db.Model(&model.Order{}).Where("status = ?", "Đã huỷ").Count(&stats.CanceledOrders)
+	db.Model(&model.Order{}).Where("production_status = ?", "Đang sản xuất").Count(&stats.ProducingOrders)
+	db.Model(&model.Order{}).Where("status IN ?", []string{"Đang giao hàng", "Đã đóng gói"}).Count(&stats.ShippedOrders)
+
+	return c.JSON(fiber.Map{
+		"orders":     response,
+		"statistics": stats,
 	})
 }

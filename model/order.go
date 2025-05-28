@@ -79,3 +79,28 @@ type CancelOrder struct {
 	CancelReason    *string `json:"reason"`
 	CancelImageURLs *string `json:"images"` // Mảng URL hình ảnh
 }
+type OrderFilter struct {
+	OrderCode     *string `json:"orderCode" query:"orderCode"`
+	CustomerName  *string `json:"customerName" validate:"omitempty,alphanum"  query:"customerName"`
+	CustomerPhone *string `json:"customerPhone" validate:"omitempty,alphanum" query:"customerPhone"`
+	TimeFilter    *string `query:"timeFilter"` //(chỉ chọn tháng 1,2,3..,12. Quý 1, 2,3,4, cả năm, năm trước) Format: "month:1", "quarter:1", "year:2025", "lastYear"
+	Year          *int    `json:"year"`
+}
+type OrderResponse struct {
+	ID            uint   `json:"id"`
+	OrderCode     string `json:"orderCode"`
+	CustomerName  string `json:"customerName"`
+	CustomerPhone string `json:"customerPhone"`
+	Address       string `json:"address"`
+
+	OrderDate        *time.Time `json:"orderDate"`
+	CancelReason     *string    `json:"cancelReason"`
+	Status           string     `json:"orderUpdateStatus"` // Đã sản xuất, Đang giao hàng, Nhận hàng, Hoàn thành, Yêu cầu sửa, Hủy đơn
+	ProductionStatus *string    `json:"prodStatus"`        //Đang sản xuất: Đang chia hàng, Đã gửi lace, Đang làm màu, Đang tẩy màu, Đang xử lý mềm mượt
+}
+type OrderStatisticsResponse struct {
+	TotalOrders     int64 `json:"totalOrders"`
+	CanceledOrders  int64 `json:"canceledOrders"`
+	ProducingOrders int64 `json:"producingOrders"`
+	ShippedOrders   int64 `json:"shippedOrders"`
+}

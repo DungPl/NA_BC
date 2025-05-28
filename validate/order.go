@@ -153,3 +153,13 @@ func UpdateRevisionStatus(key string) fiber.Handler {
 		return c.Next()
 	}
 }
+func ListOrder(c *fiber.Ctx) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var filter model.OrderFilter
+		if err := c.QueryParser(&filter); err != nil {
+			return utils.ErrorResponse(c, fiber.StatusBadRequest, "Invalid query parameters", err)
+		}
+		c.Locals("filter", filter)
+		return c.Next()
+	}
+}

@@ -68,5 +68,5 @@ func SetupRoutes(app *fiber.App) {
 	orderAdmin := v1.Group("/Admin", middleware.Protected(), middleware.CheckAdmin)
 	orderAdmin.Patch("/insertOrder/:orderId", validate.AdminEditOrder("orderId"), handler.AdminEditOrder)
 	orderAdmin.Patch("/updateRevision/:revisionInvoiceId", validate.UpdateRevisionStatus("revisionInvoiceId"), handler.UpdateRevisionStatus)
-
+	orderAdmin.Get("/listOrder", validate.ListOrder(&fiber.Ctx{}), handler.ListOrder)
 }
