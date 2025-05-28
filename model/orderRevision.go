@@ -1,6 +1,8 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 type OrderRevisionInvoice struct {
 	DTO
@@ -39,4 +41,20 @@ type RevisionInvoiceResponse struct {
 type RevisionItemResponse struct {
 	Content  string `json:"content"`
 	ImageURL string `json:"imageUrl"`
+}
+type RevisionHistory struct {
+	DTO
+	OrderId   uint                     `gorm:"not null;index" json:"orderId"`
+	AccountId uint                     `gorm:"not null" json:"accountId"`
+	Action    string                   `gorm:"type:varchar(50);not null" json:"action"`
+	Details   []RevisionHistoryDetails `gorm:"type:json" json:"details"`
+}
+type RevisionHistoryDetails struct {
+	DTO
+	RevisionHistoryId        uint       `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;foreignKey:RevisionHistoryId" json:"revisionHistoryId"`
+	Note                     string     `gorm:"type:text" json:"note"`
+	RevisionStatus           *string    `json:"revisionStatus,omitempty"`
+	RevisionProductionStatus *string    `json:"revisionProductionStatus,omitempty"`
+	FactoryReceiveRevisionAt *time.Time `json:"factoryReceiveRevisionAt,omitempty"`
+	FactoryShipRevisionAt    *time.Time `json:"factoryShipRevisionAt,omitempty"`
 }
