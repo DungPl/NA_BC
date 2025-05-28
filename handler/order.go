@@ -472,7 +472,7 @@ func CancelDraftOrder(c *fiber.Ctx) error {
 	}
 
 	// Update status to cancelled
-	order.Status = "yêu cầu cần hủy"
+	order.Status = "Đã  hủy"
 	if err := tx.Save(&order).Error; err != nil {
 		tx.Rollback()
 		fmt.Printf("CancelDraftOrder Error: %v\n", err)
@@ -605,12 +605,16 @@ func CreateEditInvoice(c *fiber.Ctx) error {
 	if input.Note == "" {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Content required", errors.New("Nội dung sửa là bắt buộc"))
 	}
-
+	today := time.Now().In(time.FixedZone("ICT", 7*3600)).Format("20060102")
+	var count int64
+	tx.Model(&model.OrderRevisionInvoice{}).Where("revision_invoice_code LIKE ?", fmt.Sprintf("RIC-%s%%", today)).Count(&count)
+	RevisionInvoiceCode := fmt.Sprintf("ORD-%s-%03d", today, count+1)
 	revisionInvoice := model.OrderRevisionInvoice{
-		OrderId:     &order.ID,
-		Reason:      input.Reason,
-		RequestDate: time.Now().In(time.FixedZone("ICT", 7*60*60)), // Set to current date in ICT timezone
-		Note:        input.Note,
+		OrderId:             &order.ID,
+		Reason:              input.Reason,
+		RevisionInvoiceCode: RevisionInvoiceCode,
+		RequestDate:         time.Now().In(time.FixedZone("ICT", 7*60*60)), // Set to current date in ICT timezone
+		Note:                input.Note,
 	}
 
 	// Create RevisionItems
@@ -633,4 +637,55 @@ func CreateEditInvoice(c *fiber.Ctx) error {
 		"revisionInvoice": revisionInvoice,
 	})
 
+}
+func RequestCancelOrder(c *fiber.Ctx) error {
+	dataInfo, _, _, _ := helper.GetInfoAccountFromToken(c)
+	orderId := c.Locals("orderId").(int)
+	//fmt.Printf("EditDraftOrder: Order ID: %d\n", orderId)
+
+	db := database.DB
+
+	tx := db.Begin()
+	var account model.Account
+	if err := tx.First(&account, dataInfo.AccountId).Error; err != nil {
+		tx.Rollback()
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Account not found",
+		})
+	}
+	var order model.Order
+	if err := tx.Preload("OrderItems").First(&order, orderId).Error; err != nil {
+		tx.Rollback()
+		return utils.ErrorResponse(c, fiber.StatusNotFound, "Order not found", err)
+	}
+	if *order.ProductionStatus != "Đang sản xuất" {
+		tx.Rollback()
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Only draft orders can be edited",
+		})
+	}
+	if order.CreatedById == nil {
+		fmt.Printf("CancelDraftOrder: Order has no creator assigned\n")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Order has no creator assigned",
+		})
+	}
+	if *order.CreatedById != dataInfo.AccountId {
+		fmt.Printf("CancelDraftOrder: Unauthorized - Creator: %d, Account: %d\n", *order.CreatedById, dataInfo.AccountId)
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": fmt.Sprintf("You are not authorized to cancel this order (Creator: %d, Your ID: %d)", *order.CreatedById, dataInfo.AccountId),
+		})
+	}
+	order.Status = "yêu cầu quản lý hủy đơn"
+	if err := tx.Save(&order).Error; err != nil {
+		tx.Rollback()
+		fmt.Printf("CancelDraftOrder Error: %v\n", err)
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Failed to cancel order", err)
+	}
+
+	tx.Commit()
+	return utils.SuccessResponse(c, fiber.StatusOK, fiber.Map{
+		"message": " order cancelled successfully",
+		"data":    order,
+	})
 }

@@ -427,3 +427,53 @@ func ListOrder(c *fiber.Ctx) error {
 		"statistics": stats,
 	})
 }
+func ListInvoice(c *fiber.Ctx) error {
+	orderCode := c.Query("OrderCode")
+	db := database.DB
+
+	query := db.Preload("Order").Preload("RevisionItems").Model(&model.OrderRevisionInvoice{})
+
+	if orderCode != "" {
+		query = query.Joins("JOIN orders ON orders.id = order_revision_invoices.order_id").
+			Where("orders.order_code ILIKE ?", "%"+orderCode+"%")
+	}
+
+	var revisionInvoices []model.OrderRevisionInvoice
+	if err := query.Find(&revisionInvoices).Error; err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Failed to fetch revision invoices", err)
+	}
+
+	response := make([]model.RevisionInvoiceResponse, len(revisionInvoices))
+	for i, invoice := range revisionInvoices {
+		revisionItems := make([]model.RevisionItemResponse, len(invoice.RevisionItems))
+		for j, item := range invoice.RevisionItems {
+			revisionItems[j] = model.RevisionItemResponse{
+				Content:  item.Content,
+				ImageURL: item.ImageURL,
+			}
+		}
+
+		orderCode := ""
+		if invoice.Order != nil {
+			orderCode = invoice.Order.OrderCode
+		}
+
+		response[i] = model.RevisionInvoiceResponse{
+			ID:                    invoice.ID,
+			OrderID:               invoice.OrderId,
+			OrderCode:             orderCode,
+			RevisionInvoiceCode:   invoice.RevisionInvoiceCode,
+			Reason:                invoice.Reason,
+			RequestDate:           invoice.RequestDate,
+			FactoryReceiveDate:    invoice.FactoryReceiveRevisionAt,
+			RevisionStatus:        invoice.RevisionStatus,
+			RevisionProductStatus: invoice.RevisionProductStatus,
+			ExpectedShipDate:      invoice.FactoryRevisionShipAt,
+			RevisionHistory:       revisionItems,
+		}
+	}
+
+	return c.JSON(fiber.Map{
+		"revisionInvoices": response,
+	})
+}

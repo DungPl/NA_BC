@@ -4,9 +4,9 @@ import "time"
 
 type OrderRevisionInvoice struct {
 	DTO
-	OrderId *uint  `gorm:"" json:"orderId"`
-	Order   *Order `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;foreignKey:OrderId" json:"order"`
-
+	OrderId                  *uint               `gorm:"" json:"orderId"`
+	Order                    *Order              `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;foreignKey:OrderId" json:"order"`
+	RevisionInvoiceCode      string              `gorm:"type:text;not null" json:"revicionInvoiceCode"`
 	Reason                   string              `gorm:"type:text;not null" json:"reason"`
 	RequestDate              time.Time           `gorm:"autoCreateTime" json:"requestDate"` // ngày hiện tại, không cho sửa
 	Note                     string              `gorm:"type:text" json:"note"`
@@ -24,18 +24,19 @@ type InputRevisionStatus struct {
 	FactoryShipRevisionAt    *string `json:"factoryShipRevisionAt"`
 }
 type RevisionInvoiceResponse struct {
-	ID                       uint      `json:"id"`
-	OrderCode                string    `json:"orderCode"`
-	CustomerName             string    `json:"customerName"`
-	CustomerPhone            string    `json:"customerPhone"`
-	RequestDate              time.Time `json:"requestDate"`
-	Reason                   string    `json:"reason"`
-	RevisionStatus           *string   `json:"revisionStatus"`
-	RevisionProductionStatus *string   `json:"revisionProductionStatus"`
+	ID                    uint                   `json:"id"`
+	OrderID               *uint                  `json:"orderId"`
+	OrderCode             string                 `json:"orderCode"`
+	RevisionInvoiceCode   string                 `json:"revisionInvoiceCode"`
+	Reason                string                 `json:"reason"`
+	RequestDate           time.Time              `json:"requestDate"`
+	FactoryReceiveDate    *time.Time             `json:"factoryReceiveRevisionAt"`
+	RevisionStatus        string                 `json:"revisionStatus"`
+	RevisionProductStatus string                 `json:"revisionProductStatus"`
+	ExpectedShipDate      *time.Time             `json:"factoryRevisionShipAt"`
+	RevisionHistory       []RevisionItemResponse `json:"revisionItems"`
 }
-type StatisticsResponse struct {
-	TotalOrders     int `json:"totalOrders"`
-	CanceledOrders  int `json:"canceledOrders"`
-	ProducingOrders int `json:"producingOrders"`
-	ShippedOrders   int `json:"shippedOrders"`
+type RevisionItemResponse struct {
+	Content  string `json:"content"`
+	ImageURL string `json:"imageUrl"`
 }

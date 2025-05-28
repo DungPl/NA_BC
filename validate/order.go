@@ -163,3 +163,14 @@ func ListOrder(c *fiber.Ctx) fiber.Handler {
 		return c.Next()
 	}
 }
+func CancelOrder(key string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		params := c.Params(key)
+		valueKey, err := strconv.Atoi(params)
+		if err != nil {
+			return utils.ErrorResponse(c, fiber.StatusBadRequest, constants.DATA_INPUT_IS_NOT_NUMBER, errors.New("params invalid"))
+		}
+		c.Locals("orderId", valueKey)
+		return c.Next()
+	}
+}
