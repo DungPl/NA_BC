@@ -185,11 +185,17 @@ func UpdateRevisionStatus(c *fiber.Ctx) error {
 	if !isValidRevisionStatus {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Invalid revision status", fmt.Errorf("Trạng thái sửa đơn phải là một trong: %v", validRevisionStatuses))
 	}
-
+	db := database.DB
+	tx := db.Begin()
+	if tx.Error != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Transaction error", tx.Error)
+	}
+	var revisionInvoice model.OrderRevisionInvoice
 	if input.RevisionProductionStatus != nil && *input.RevisionProductionStatus != "" {
 		if input.RevisionStatus != "Đang sản xuất" {
 			return utils.ErrorResponse(c, fiber.StatusBadRequest, "Revision production status is only allowed when revision status is 'Đang sản xuất'", errors.New("Trạng thái sản xuất chỉ được cập nhật khi trạng thái sửa đơn là 'Đang sản xuất'"))
 		}
+
 		if input.RevisionProductionStatus != nil {
 			validProductionStatuses := []string{
 				"Đang chia hàng",
@@ -210,11 +216,6 @@ func UpdateRevisionStatus(c *fiber.Ctx) error {
 			}
 		}
 	}
-	db := database.DB
-	tx := db.Begin()
-	if tx.Error != nil {
-		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Transaction error", tx.Error)
-	}
 
 	// Verify account
 	var account model.Account
@@ -226,12 +227,18 @@ func UpdateRevisionStatus(c *fiber.Ctx) error {
 	}
 
 	// Verify revision invoice exists
-	var revisionInvoice model.OrderRevisionInvoice
+
 	if err := tx.Preload("Order").Preload("RevisionItems").First(&revisionInvoice, revisionInvoiceId).Error; err != nil {
 		tx.Rollback()
 		return utils.ErrorResponse(c, fiber.StatusNotFound, "Revision invoice not found", err)
 	}
-
+	if input.RevisionStatus == "Đang sản xuất" {
+		revisionInvoice.Order.Status = "Đang sản xuất"
+		if err := tx.Save(&revisionInvoice.Order).Error; err != nil {
+			tx.Rollback()
+			return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Failed to update order status", err)
+		}
+	}
 	// Update fields
 	// Update revision status
 	revisionInvoice.RevisionStatus = input.RevisionStatus
@@ -446,10 +453,10 @@ func ListOrder(c *fiber.Ctx) error {
 	var stats model.OrderStatisticsResponse
 	db.Model(&model.Order{}).Count(&stats.TotalOrders)
 	db.Model(&model.Order{}).Where("status = ?", "Đã huỷ").Count(&stats.CanceledOrders)
-	db.Model(&model.Order{}).Where("status =?", "Đã hoàn thành").Count(&stats.CompletedOrders)
+	db.Model(&model.Order{}).Where("status =?", "Hoàn thành").Count(&stats.CompletedOrders)
 	db.Model(&model.Order{}).Where("status =?", "Đã gửi và chưa sản xuất").Count(&stats.ApplicationOrders)
-	db.Model(&model.Order{}).Where("production_status = ?", "Đang sản xuất").Count(&stats.ProducingOrders)
-	db.Model(&model.Order{}).Where("status IN ?", []string{"Đang giao hàng", "Đã đóng gói"}).Count(&stats.ShippedOrders)
+	db.Model(&model.Order{}).Where("status = ?", "Đang sản xuất").Count(&stats.ProducingOrders)
+	db.Model(&model.Order{}).Where("status IN ?", []string{"Đang giao hàng", "Đã đóng gói - chờ giao hàng"}).Count(&stats.ShippedOrders)
 
 	return c.JSON(fiber.Map{
 		"orders":     response,

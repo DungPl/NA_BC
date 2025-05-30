@@ -517,7 +517,7 @@ func UpdateStatusOrder(c *fiber.Ctx) error {
 		})
 	}
 	validStatuses := []string{"Nhận hàng", "Hủy đơn", "Yêu cầu sửa đơn"}
-	if order.Status == "Đã giao hàng" {
+	if order.Status == "Đang giao hàng" {
 		// Validate new status
 		isValidStatus := false
 		for _, status := range validStatuses {
@@ -537,7 +537,7 @@ func UpdateStatusOrder(c *fiber.Ctx) error {
 	if input.Status == "Nhận hàng" {
 		currentTime := time.Now()
 		order.FinalizedAt = &currentTime
-		//order.Status = "Hoàn thành" // "Nhận hàng" leads to "Hoàn thành"
+		order.Status = "Hoàn thành" // "Nhận hàng" leads to "Hoàn thành"
 	} else if input.Status == "Hủy đơn" {
 		if input.CancelReason == nil || *input.CancelReason == "" {
 			tx.Rollback()
@@ -555,7 +555,7 @@ func UpdateStatusOrder(c *fiber.Ctx) error {
 		order.Status = input.Status
 	}
 
-	order.Status = input.Status
+	//order.Status = input.Status
 	if err := db.Save(&order).Error; err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Failed to update order", err)
 	}
