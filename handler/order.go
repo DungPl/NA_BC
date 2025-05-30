@@ -510,10 +510,10 @@ func UpdateStatusOrder(c *fiber.Ctx) error {
 		tx.Rollback()
 		return utils.ErrorResponse(c, fiber.StatusNotFound, "Order not found", err)
 	}
-	if order.Status != "Đã giao hàng" {
+	if order.Status != "Đang giao hàng" && order.Status != "Đã hoàn thành sửa" {
 		tx.Rollback()
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Chỉ có thể cập nhật invoice sửa đơn cho đơn hàng ở trạng thái 'Đã giao hàng'",
+			"error": "Chỉ có thể cập nhật invoice sửa đơn cho đơn hàng ở trạng thái 'Đang giao hàng' hoặc 'Đã hoàn thành sửa",
 		})
 	}
 	validStatuses := []string{"Nhận hàng", "Hủy đơn", "Yêu cầu sửa đơn"}
@@ -537,7 +537,7 @@ func UpdateStatusOrder(c *fiber.Ctx) error {
 	if input.Status == "Nhận hàng" {
 		currentTime := time.Now()
 		order.FinalizedAt = &currentTime
-		order.Status = "Hoàn thành" // "Nhận hàng" leads to "Hoàn thành"
+		//order.Status = "Hoàn thành" // "Nhận hàng" leads to "Hoàn thành"
 	} else if input.Status == "Hủy đơn" {
 		if input.CancelReason == nil || *input.CancelReason == "" {
 			tx.Rollback()

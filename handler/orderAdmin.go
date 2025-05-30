@@ -274,6 +274,11 @@ func UpdateRevisionStatus(c *fiber.Ctx) error {
 
 	var factoryShipRevisionAt *time.Time
 	if input.RevisionStatus == "Đang giao hàng" || input.RevisionStatus == "Đã đóng gói - chờ giao" {
+		revisionInvoice.Order.Status = "Đã hoàn thành sửa"
+		if err := tx.Save(&revisionInvoice.Order).Error; err != nil {
+			tx.Rollback()
+			return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Failed to update order status", err)
+		}
 		if input.FactoryShipRevisionAt != nil && *input.FactoryShipRevisionAt != "" {
 			parsedDate, err := time.ParseInLocation("2006-01-02", *input.FactoryShipRevisionAt, time.FixedZone("ICT", 7*60*60))
 			if err != nil {
@@ -441,6 +446,8 @@ func ListOrder(c *fiber.Ctx) error {
 	var stats model.OrderStatisticsResponse
 	db.Model(&model.Order{}).Count(&stats.TotalOrders)
 	db.Model(&model.Order{}).Where("status = ?", "Đã huỷ").Count(&stats.CanceledOrders)
+	db.Model(&model.Order{}).Where("status =?", "Đã hoàn thành").Count(&stats.CompletedOrders)
+	db.Model(&model.Order{}).Where("status =?", "Đã gửi và chưa sản xuất").Count(&stats.ApplicationOrders)
 	db.Model(&model.Order{}).Where("production_status = ?", "Đang sản xuất").Count(&stats.ProducingOrders)
 	db.Model(&model.Order{}).Where("status IN ?", []string{"Đang giao hàng", "Đã đóng gói"}).Count(&stats.ShippedOrders)
 
