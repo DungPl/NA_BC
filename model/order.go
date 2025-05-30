@@ -99,8 +99,10 @@ type OrderResponse struct {
 	ProductionStatus *string    `json:"prodStatus"`        //Đang sản xuất: Đang chia hàng, Đã gửi lace, Đang làm màu, Đang tẩy màu, Đang xử lý mềm mượt
 }
 type OrderStatisticsResponse struct {
-	TotalOrders     int64 `json:"totalOrders"`
-	CanceledOrders  int64 `json:"canceledOrders"`
-	ProducingOrders int64 `json:"producingOrders"`
-	ShippedOrders   int64 `json:"shippedOrders"`
+	TotalOrders       int64 `json:"totalOrders"`
+	CanceledOrders    int64 `json:"canceledOrders"`
+	ProducingOrders   int64 `json:"producingOrders"`
+	ShippedOrders     int64 `json:"shippedOrders"`
+	CompletedOrders   int64 `json:"completedOrders"`   //int64
+	ApplicationOrders int64 `json:"applicationOrders"` //int64
 }
