@@ -242,7 +242,14 @@ func UpdateRevisionStatus(c *fiber.Ctx) error {
 	} else {
 		revisionInvoice.RevisionProductStatus = ""
 	}
-	currentDate := time.Now().In(time.FixedZone("ICT", 7*60*60)) // 2025-05-23 00:00:00 +07:00
+	// Prepare history details
+	currentDate := time.Now().In(time.FixedZone("ICT", 7*60*60))
+	historyDetails := model.RevisionHistoryDetail{
+		RevisionStatus:           &input.RevisionStatus,
+		RevisionProductionStatus: input.RevisionProductionStatus,
+		Note:                     fmt.Sprintf("Manager updated revision invoice %d for order %s", revisionInvoiceId, revisionInvoice.Order.OrderCode),
+	}
+	//currentDate := time.Now().In(time.FixedZone("ICT", 7*60*60)) // 2025-05-23 00:00:00 +07:00
 
 	var factoryReceiveRevisionAt *time.Time
 	if input.RevisionStatus == "Đã nhận hàng cần sửa" {
@@ -255,9 +262,11 @@ func UpdateRevisionStatus(c *fiber.Ctx) error {
 				return utils.ErrorResponse(c, fiber.StatusBadRequest, "Factory receive revision date cannot be in the past", errors.New("Ngày xưởng nhận đơn sửa không được ở quá khứ"))
 			}
 			factoryReceiveRevisionAt = &parsedDate
+			historyDetails.FactoryReceiveRevisionAt = factoryReceiveRevisionAt
 		} else {
 			// Auto-set to current date if no input provided
 			factoryReceiveRevisionAt = &currentDate
+			historyDetails.FactoryReceiveRevisionAt = factoryReceiveRevisionAt
 		}
 	} else if input.FactoryReceiveRevisionAt != nil && *input.FactoryReceiveRevisionAt != "" {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Factory receive revision date requires revision status to be 'Đã nhận hàng cần sửa'", errors.New("Ngày xưởng nhận đơn sửa chỉ được cập nhật khi trạng thái là 'Đã nhận hàng cần sửa'"))
@@ -274,9 +283,11 @@ func UpdateRevisionStatus(c *fiber.Ctx) error {
 				return utils.ErrorResponse(c, fiber.StatusBadRequest, "Factory ship revision date cannot be in the past", errors.New("Ngày xưởng giao lại không được ở quá khứ"))
 			}
 			factoryShipRevisionAt = &parsedDate
+			historyDetails.FactoryShipRevisionAt = factoryShipRevisionAt
 		} else if input.RevisionStatus == "Đang giao hàng" {
 			// Auto-set to current date if no input provided and status is "Đang giao hàng"
 			factoryShipRevisionAt = &currentDate
+			historyDetails.FactoryShipRevisionAt = factoryShipRevisionAt
 		}
 	} else if input.FactoryShipRevisionAt != nil && *input.FactoryShipRevisionAt != "" {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Factory ship revision date requires revision status to be 'Đang giao hàng' or 'Đã đóng gói - chờ giao'", errors.New("Ngày xưởng giao lại chỉ được cập nhật khi trạng thái sửa đơn là 'Đang giao hàng' hoặc 'Đã đóng gói - chờ giao'"))
@@ -284,6 +295,17 @@ func UpdateRevisionStatus(c *fiber.Ctx) error {
 
 	if factoryReceiveRevisionAt != nil {
 		revisionInvoice.FactoryReceiveRevisionAt = factoryReceiveRevisionAt
+	}
+
+	history := model.RevisionHistory{
+		OrderId:   *revisionInvoice.OrderId,
+		AccountId: dataInfo.AccountId,
+		Action:    "UpdatedRevision",
+		Details:   []model.RevisionHistoryDetail{historyDetails},
+	}
+	if err := tx.Create(&history).Error; err != nil {
+		tx.Rollback()
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Failed to create history record", err)
 	}
 	revisionInvoice.RevisionStatus = input.RevisionStatus
 	if input.RevisionProductionStatus != nil && *input.RevisionProductionStatus != "" {
@@ -428,52 +450,44 @@ func ListOrder(c *fiber.Ctx) error {
 	})
 }
 func ListInvoice(c *fiber.Ctx) error {
-	orderCode := c.Query("OrderCode")
 	db := database.DB
+	var revisionInvoices []model.OrderRevisionInvoice
 
-	query := db.Preload("Order").Preload("RevisionItems").Model(&model.OrderRevisionInvoice{})
+	query := db.Preload("Order").Preload("RevisionItems")
 
+	// Bộ lọc theo mã đơn
+	orderCode := c.Query("orderCode")
 	if orderCode != "" {
 		query = query.Joins("JOIN orders ON orders.id = order_revision_invoices.order_id").
 			Where("orders.order_code ILIKE ?", "%"+orderCode+"%")
 	}
 
-	var revisionInvoices []model.OrderRevisionInvoice
 	if err := query.Find(&revisionInvoices).Error; err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Failed to fetch revision invoices", err)
 	}
 
-	response := make([]model.RevisionInvoiceResponse, len(revisionInvoices))
-	for i, invoice := range revisionInvoices {
-		revisionItems := make([]model.RevisionItemResponse, len(invoice.RevisionItems))
-		for j, item := range invoice.RevisionItems {
-			revisionItems[j] = model.RevisionItemResponse{
-				Content:  item.Content,
-				ImageURL: item.ImageURL,
-			}
+	var response []model.RevisionInvoiceResponse
+	for _, inv := range revisionInvoices {
+		// Lấy lịch sử sửa từ revision_history
+		var history []model.RevisionHistory
+		if err := db.Where("order_id = ?", inv.OrderId).Preload("Details").Find(&history).Error; err != nil {
+			return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Failed to fetch revision history", err)
 		}
 
-		orderCode := ""
-		if invoice.Order != nil {
-			orderCode = invoice.Order.OrderCode
-		}
-
-		response[i] = model.RevisionInvoiceResponse{
-			ID:                    invoice.ID,
-			OrderID:               invoice.OrderId,
-			OrderCode:             orderCode,
-			RevisionInvoiceCode:   invoice.RevisionInvoiceCode,
-			Reason:                invoice.Reason,
-			RequestDate:           invoice.RequestDate,
-			FactoryReceiveDate:    invoice.FactoryReceiveRevisionAt,
-			RevisionStatus:        invoice.RevisionStatus,
-			RevisionProductStatus: invoice.RevisionProductStatus,
-			ExpectedShipDate:      invoice.FactoryRevisionShipAt,
-			RevisionHistory:       revisionItems,
-		}
+		response = append(response, model.RevisionInvoiceResponse{
+			RevisionCode:             inv.RevisionInvoiceCode,
+			OrderCode:                inv.Order.OrderCode,
+			Note:                     inv.Note,
+			CreatedAt:                inv.CreatedAt,
+			RevisionHistory:          history,
+			RevisionStatus:           inv.RevisionStatus,
+			FactoryReceiveRevisionAt: inv.FactoryReceiveRevisionAt,
+			FactoryRevisionShipAt:    inv.FactoryRevisionShipAt,
+		})
 	}
 
-	return c.JSON(fiber.Map{
-		"revisionInvoices": response,
+	return utils.SuccessResponse(c, fiber.StatusOK, fiber.Map{
+		"message": "Revision invoices fetched successfully",
+		"data":    response,
 	})
 }

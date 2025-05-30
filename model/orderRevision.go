@@ -25,36 +25,33 @@ type InputRevisionStatus struct {
 	RevisionProductionStatus *string `json:"revisionProductionStatus"`
 	FactoryShipRevisionAt    *string `json:"factoryShipRevisionAt"`
 }
-type RevisionInvoiceResponse struct {
-	ID                    uint                   `json:"id"`
-	OrderID               *uint                  `json:"orderId"`
-	OrderCode             string                 `json:"orderCode"`
-	RevisionInvoiceCode   string                 `json:"revisionInvoiceCode"`
-	Reason                string                 `json:"reason"`
-	RequestDate           time.Time              `json:"requestDate"`
-	FactoryReceiveDate    *time.Time             `json:"factoryReceiveRevisionAt"`
-	RevisionStatus        string                 `json:"revisionStatus"`
-	RevisionProductStatus string                 `json:"revisionProductStatus"`
-	ExpectedShipDate      *time.Time             `json:"factoryRevisionShipAt"`
-	RevisionHistory       []RevisionItemResponse `json:"revisionItems"`
-}
-type RevisionItemResponse struct {
-	Content  string `json:"content"`
-	ImageURL string `json:"imageUrl"`
-}
+
 type RevisionHistory struct {
 	DTO
-	OrderId   uint                     `gorm:"not null;index" json:"orderId"`
-	AccountId uint                     `gorm:"not null" json:"accountId"`
-	Action    string                   `gorm:"type:varchar(50);not null" json:"action"`
-	Details   []RevisionHistoryDetails `gorm:"type:json" json:"details"`
+	OrderId   uint                    `gorm:"not null;foreignKey:OrderId;references:orders(id);constraint:OnUpdate:RESTRICT,OnDelete:RESTRICT" json:"orderId"`
+	AccountId uint                    `gorm:"not null;foreignKey:AccountId;references:accounts(id);constraint:OnUpdate:RESTRICT,OnDelete:RESTRICT" json:"accountId"`
+	Action    string                  `gorm:"type:varchar(50);not null" json:"action"`
+	Details   []RevisionHistoryDetail ` json:"details"`
 }
-type RevisionHistoryDetails struct {
+type RevisionHistories []RevisionHistory
+type RevisionHistoryDetail struct {
 	DTO
-	RevisionHistoryId        uint       `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;foreignKey:RevisionHistoryId" json:"revisionHistoryId"`
+	RevisionHistoryId        uint       `gorm:"foreignKey:RevisionHistoryId;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"revisionHistoryId"`
 	Note                     string     `gorm:"type:text" json:"note"`
-	RevisionStatus           *string    `json:"revisionStatus,omitempty"`
-	RevisionProductionStatus *string    `json:"revisionProductionStatus,omitempty"`
-	FactoryReceiveRevisionAt *time.Time `json:"factoryReceiveRevisionAt,omitempty"`
-	FactoryShipRevisionAt    *time.Time `json:"factoryShipRevisionAt,omitempty"`
+	RevisionStatus           *string    `json:"revisionStatus"`
+	RevisionProductionStatus *string    `json:"revisionProductionStatus"`
+	FactoryReceiveRevisionAt *time.Time `json:"factoryReceiveRevisionAt"`
+	FactoryShipRevisionAt    *time.Time `json:"factoryShipRevisionAt"`
+}
+type RevisionHistoryDetails []RevisionHistoryDetail
+type RevisionInvoiceResponse struct {
+	RevisionCode             string              `json:"revisionCode"`
+	OrderCode                string              `json:"orderCode"`
+	Note                     string              `json:"note"`
+	CreatedAt                time.Time           `json:"createdAt"`
+	RevisionHistory          []RevisionHistory   `json:"revisionHistory"`
+	RevisionStatus           string              `json:"revisionStatus"`
+	FactoryReceiveRevisionAt *time.Time          `json:"factoryReceiveRevisionAt"`
+	FactoryRevisionShipAt    *time.Time          `json:"factoryRevisionShipAt"`
+	Image                    []OrderRevisionItem `json:"images"`
 }

@@ -29,6 +29,7 @@ func SetupRoutes(app *fiber.App) {
 	auth := v1.Group("/auth")
 	auth.Post("/login", handler.Login)
 	auth.Post("/refresh-token", handler.RefreshToken)
+	//auth.Get("/exportExcel", handler.ExportExcelHandler)
 	account := v1.Group("/account", logger.New())
 	account.Get("/", middleware.Protected(), handler.Me)
 	account.Post("/changePassword/:staffId", validate.AdminChangePassword(&fiber.Ctx{}), handler.AdminChangePassword)
@@ -70,4 +71,5 @@ func SetupRoutes(app *fiber.App) {
 	orderAdmin.Patch("/updateRevision/:revisionInvoiceId", validate.UpdateRevisionStatus("revisionInvoiceId"), handler.UpdateRevisionStatus)
 	orderAdmin.Get("/listOrder", validate.ListOrder(&fiber.Ctx{}), handler.ListOrder)
 	orderAdmin.Get("/listRevisionInvoice", handler.ListInvoice)
+
 }
