@@ -30,6 +30,8 @@ func SetupRoutes(app *fiber.App) {
 	auth.Post("/login", handler.Login)
 	auth.Post("/refresh-token", handler.RefreshToken)
 	auth.Get("/exportExcel", handler.ExportExcelHandler)
+	auth.Post("/exportExcelv2", handler.ExportExcelv2Handler)
+	auth.Get("/exportExcelShip", handler.ExportExcelv3Handler)
 	account := v1.Group("/account", logger.New())
 	account.Get("/", middleware.Protected(), handler.Me)
 	account.Post("/changePassword/:staffId", validate.AdminChangePassword(&fiber.Ctx{}), handler.AdminChangePassword)
