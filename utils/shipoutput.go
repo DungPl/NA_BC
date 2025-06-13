@@ -67,12 +67,13 @@ var rowHeight = map[int]float64{
 }
 
 const (
-	sheet1           = "BẢNG KÊ THU"
-	sheet2           = "BẢNG KÊ CHI"
-	defaultFontShip  = "Times New Roman"
-	titleRowShip     = 7  // Tiêu đề ở hàng 4
-	headerRowShip    = 14 // Tiêu đề bảng ở hàng 8
-	dataStartRowShip = 15 // Dữ liệu bảng bắt đầu từ hàng 9
+	sheet1            = "BẢNG KÊ THU"
+	sheet2            = "BẢNG KÊ CHI"
+	defaultFontShip   = "Times New Roman"
+	titleRowShip      = 7
+	headerRowShip     = 14
+	dataStartRowShip  = 15
+	dataStartRowShip2 = 13
 	//bankInfoStartRow = 8+7*n+2 // Thông tin ngân hàng ở hàng 24
 	//signatureRow     = 8+7*n+5 // Chữ ký ở hàng 27
 
@@ -146,6 +147,10 @@ type StylesShip struct {
 	YellowFill        int
 	TealFill          int
 	SixteenBold       int
+
+	TwentyBoldUnderline int
+	LightPinkBold       int
+	LightPink           int
 }
 
 func initializeStylesShip(f *excelize.File) (*StylesShip, error) {
@@ -155,6 +160,7 @@ func initializeStylesShip(f *excelize.File) (*StylesShip, error) {
 	styleship.HeaderStyle, err = f.NewStyle(&excelize.Style{
 		Font:      &excelize.Font{Bold: true, Size: 8},
 		Alignment: &excelize.Alignment{Horizontal: "center", Vertical: "center"},
+		Fill:      excelize.Fill{Type: "pattern", Color: []string{"#e3edf7"}, Pattern: 1},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create header style: %w", err)
@@ -274,9 +280,6 @@ func initializeStylesShip(f *excelize.File) (*StylesShip, error) {
 	}
 	styleship.BoldItalic, err = f.NewStyle(&excelize.Style{
 		Font: &excelize.Font{Bold: true, Italic: true},
-		Alignment: &excelize.Alignment{
-			Horizontal: "center",
-		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create no border style: %w", err)
@@ -304,6 +307,38 @@ func initializeStylesShip(f *excelize.File) (*StylesShip, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create no border style: %w", err)
 	}
+	styleship.TwentyBoldUnderline, err = f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{Bold: true, Size: 20, Underline: "single"},
+		Fill: excelize.Fill{Type: "pattern", Color: []string{"#e3edf7"}, Pattern: 1},
+		Alignment: &excelize.Alignment{
+			Horizontal: "center",
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create no border style: %w", err)
+	}
+	styleship.LightPinkBold, err = f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{Bold: true, Size: 11},
+		Fill: excelize.Fill{Type: "pattern", Color: []string{"#f5dedd"}, Pattern: 1},
+		Alignment: &excelize.Alignment{
+			Horizontal: "center",
+			Vertical:   "center",
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create no border style: %w", err)
+	}
+	styleship.LightPink, err = f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{Color: "#f5dedd"},
+		Fill: excelize.Fill{Type: "pattern", Color: []string{"#f5dedd"}, Pattern: 1},
+		Alignment: &excelize.Alignment{
+			Horizontal: "center",
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create no border style: %w", err)
+	}
+
 	return styleship, nil
 }
 func setHeader1Section(f *excelize.File, sheetName string, styleship *StylesShip) error {
@@ -368,7 +403,7 @@ func setTitle1(f *excelize.File, sheetName string, styleship *StylesShip) error 
 
 	return nil
 }
-func setFooterSection(f *excelize.File, sheetName string, styleship *StylesShip, totalRow int) error {
+func setFooter1Section(f *excelize.File, sheetName string, styleship *StylesShip, totalRow int) error {
 	// Data rows and summary
 	summaryRow := totalRow + 1
 	if err := f.SetCellValue(sheetName, fmt.Sprintf("A%d", summaryRow), "TỔNG CỘNG PHẢI TRẢ"); err != nil {
@@ -437,6 +472,41 @@ func setFooterSection(f *excelize.File, sheetName string, styleship *StylesShip,
 
 	return nil
 }
+func SetHeader2Section(f *excelize.File, sheetName string, styleship *StylesShip) error {
+	f.SetCellValue(sheet2, "A3", "BẢNG KÊ SẢN LƯỢNG VẬN CHUYỂN")
+
+	f.MergeCell(sheet2, "A3", "W3")
+
+	f.SetCellStyle(sheet2, "A7", "Y7", styleship.TwentyBoldUnderline)
+
+	f.SetCellValue(sheet2, "A5", "Nhà xe")
+	f.SetCellValue(sheet2, "A6", "Tên viết tắt")
+	f.SetCellValue(sheet2, "A7", "Người phụ trách")
+	f.SetCellValue(sheet2, "F5", "CHI NHÁNH CÔNG TY CỔ PHẦN GIAO NHẬN VẬN TẢI CON ONG")
+	f.SetCellValue(sheet2, "F6", "BEEHAN")
+	f.SetCellValue(sheet2, "A8", "Hai bên cùng xác nhận sản lượng vận chuyển từ ngày")
+	f.SetCellValue(sheet2, "W8", "25-12-2024")
+	f.SetCellValue(sheet2, "G11", "CƯỚC")
+
+	f.MergeCell(sheet2, "A6", "B6")
+	f.MergeCell(sheet2, "A7", "B7")
+	f.MergeCell(sheet2, "F5", "P5")
+	f.MergeCell(sheet2, "F6", "V6")
+	f.MergeCell(sheet2, "A8", "V8")
+	f.MergeCell(sheet2, "G11", "M11")
+	f.SetCellStyle(sheet2, "A3", "W3", styleship.TwentyBoldUnderline)
+	f.SetCellStyle(sheet2, "A8", "A8", styleship.BoldItalic)
+	f.SetCellStyle(sheet2, "F5", "P5", styleship.Bold)
+	f.SetCellStyle(sheet2, "F6", "V6", styleship.Bold)
+	f.SetCellStyle(sheet2, "W8", "W8", styleship.BoldIatlicRed)
+	f.SetCellStyle(sheet2, "A4", "W7", styleship.NoBorder)
+	f.SetCellStyle(sheet2, "A11", "F11", styleship.BorderNoLeftRight)
+	f.SetCellStyle(sheet2, "G11", "M11", styleship.LightPinkBold)
+	f.SetCellStyle(sheet2, "N11", "N11", styleship.LightPink)
+	f.SetCellStyle(sheet2, "O11", "O11", styleship.YellowFill)
+
+	return nil
+}
 func ExportPaymentRequestExcelv3(filename string) error {
 	f := excelize.NewFile()
 	defer func() {
@@ -464,12 +534,21 @@ func ExportPaymentRequestExcelv3(filename string) error {
 			return fmt.Errorf("failed to set width for column %s: %w", col, err)
 		}
 	}
+	for col, width := range colWidths2 {
+		if err := f.SetColWidth(sheet2, col, col, width); err != nil {
+			return fmt.Errorf("failed to set width for column %s: %w", col, err)
+		}
+	}
 	if err := setHeader1Section(f, sheet1, styleship); err != nil {
 		fmt.Println("Error setting header section:", err)
 		return nil
 	}
 
 	if err := setTitle1(f, sheet1, styleship); err != nil {
+		fmt.Println("Error setting title:", err)
+		return nil
+	}
+	if err := SetHeader2Section(f, sheet2, styleship); err != nil {
 		fmt.Println("Error setting title:", err)
 		return nil
 	}
@@ -480,8 +559,8 @@ func ExportPaymentRequestExcelv3(filename string) error {
 	}
 
 	// Điền header cho Sheet2
-	for colIdx, header := range TableHeadersFee {
-		cell := fmt.Sprintf("%c%d", 'A'+colIdx, 1)
+	for colIdx2, header := range TableHeadersFee {
+		cell := fmt.Sprintf("%c%d", 'A'+colIdx2, 12)
 		f.SetCellValue(sheet2, cell, header)
 		f.SetCellStyle(sheet2, cell, cell, styleship.HeaderStyle)
 	}
@@ -604,9 +683,7 @@ func ExportPaymentRequestExcelv3(filename string) error {
 	if err := f.SetCellStyle(sheet1, fmt.Sprintf("A%d", totalRow), fmt.Sprintf("H%d", totalRow), styleship.ElevenBold); err != nil {
 		return fmt.Errorf("failed to apply bold style to A%d:N%d: %w", totalRow, totalRow, err)
 	}
-	// if err := f.SetCellFloat(sheet1, fmt.Sprintf("O%d", totalRow), totalCongTienHang, 0, 64); err != nil {
-	// 	return fmt.Errorf("failed to set Cong Tien Hang total in O%d: %w", totalRow, err)
-	// }
+
 	f.SetCellFloat(sheet1, fmt.Sprintf("I%d", totalRow), totalCucVC, 0, 64)
 	f.SetCellFloat(sheet1, fmt.Sprintf("L%d", totalRow), totalNamLai, 0, 64)
 	f.SetCellFloat(sheet1, fmt.Sprintf("M%d", totalRow), totalCPKhac, 0, 64)
@@ -623,65 +700,138 @@ func ExportPaymentRequestExcelv3(filename string) error {
 	if err := f.SetCellStyle(sheet1, fmt.Sprintf("P%d", totalRow), fmt.Sprintf("P%d", totalRow), styleship.BoldMoneyStyle); err != nil {
 		return fmt.Errorf("failed to apply bold money style to P%d: %w", totalRow, err)
 	}
-	// if err := f.SetCellFloat(sheet1, fmt.Sprintf("Q%d", totalRow), totalTongThanhToan, 0, 64); err != nil {
-	// 	return fmt.Errorf("failed to set Tong Thanh Toan total in Q%d: %w", totalRow, err)
-	// }
+
 	if err := f.SetCellStyle(sheet1, fmt.Sprintf("Q%d", totalRow), fmt.Sprintf("Q%d", totalRow), styleship.BoldMoneyStyle); err != nil {
 		return fmt.Errorf("failed to apply bold money style to Q%d: %w", totalRow, err)
 	}
-	setFooterSection(f, sheet1, styleship, totalRow)
+	setFooter1Section(f, sheet1, styleship, totalRow)
 
+	dataSheet2 := [][]interface{}{
+		{1, "26/11/2024", "KH.26112024.13", "GAOU6765765", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15H 07303", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{2, "27/11/2024", "KH.27112024.41", "TXGU6839401", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15C17786", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{3, "27/11/2024", "KH.27112024.42", "TLLU8616128", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "29C71582", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{4, "28/11/2024", "KH.28112024.50", "TXGU6554190", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15H08479", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{5, "29/11/2024", "KH.29112024.31", "TSSU5176234", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15C22535", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{6, "29/11/2024", "KH.29112024.32", "FFAU4382558", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15C03270", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{7, "03/12/2024", "KH.03122024.31", "TLLU8699441", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15C13956", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{8, "03/12/2024", "KH.03122024.32", "CAAU7626926", "40HC", "CANON THĂNG LONG, HÀ NỘI - HẢI PHÒNG", "15H03856", 2500000, "", "", "", "", 2500000, 200000, 2700000, ""},
+		{9, "04/12/2024", "KH.04122024.64", "TRHU8855824", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15H05864", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{10, "05/12/2024", "KH.06122024.14", "TSSU5061847", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15C15654", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{11, "05/12/2024", "KH.06122024.16", "TSSU5154385", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15H05147", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{12, "05/12/2024", "KH.06122024.19", "TSSU5187917", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15C20649", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{13, "06/12/2024", "KH.06122024.37", "GAOU7078193", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15F-01759", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{14, "06/12/2024", "KH.06122024.38", "BHCU5015964", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15F-01721", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{15, "06/12/2024", "KH.06122024.39", "GAOU6728421", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "29H-77080", 2700000, "", "", 200000, "", 2900000, 232000, 3132000, ""},
+		{16, "06/12/2024", "KH.06122024.40", "TSSU5210581", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15H07388", 2700000, "", "", 200000, "", 2900000, 232000, 3132000, ""},
+		{17, "06/12/2024", "KH.06122024.41", "BEAU6454029", "40HC", "PHỐ NỐI, HƯNG YÊN - HẢI PHÒNG", "15C31373", 2200000, "", "", "", "", 2200000, 176000, 2376000, ""},
+		{18, "07/12/2024", "KH.07122024.22", "TSSU5097855", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15C 14626", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{19, "07/12/2024", "KH.07122024.24", "TXGU8264060", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15H07778", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{20, "08/12/2024", "KH.09122024.13", "TXGU5812767", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "99E-01867", 2700000, "", "", 200000, "", 2900000, 232000, 3132000, ""},
+		{21, "09/12/2024", "KH.09122024.18", "TXGU6906346", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15C31806", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{22, "09/12/2024", "CK.10122024.3", "BMOU5006575", "40HC", "HẢI PHÒNG - QUẾ VÕ, BẮC NINH", "15C32924", 3000000, "", "", "", 200000, 3200000, 256000, 3456000, ""},
+		{23, "10/12/2024", "KH.10122024.38", "TLLU8591610", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "29H76185", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{24, "10/12/2024", "KH.10122024.39", "GCXU6517842", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15C14207", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{25, "10/12/2024", "KH.10122024.40", "TXGU7360706", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15C04028", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{26, "11/12/2024", "KH.11122024.35", "GAOU6961979", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15C14996", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{27, "11/12/2024", "KH.11122024.36", "TSSU5159685", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15H06828", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{28, "17/12/2024", "KH.17122024.43", "GAOU6732653", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15C31169", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{29, "17/12/2024", "KH.17122024.44", "TSSU5184883", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15H00442", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{30, "17/12/2024", "CK.18122024.11-1", "NLLU4149610", "40HC", "ĐẠI TỪ, THÁI NGUYÊN - HẢI PHÒNG", "15H07954", 4500000, "", "", "", 500000, 5000000, 400000, 5400000, ""},
+		{31, "18/12/2024", "KH.18122024.52", "GAOU6769919", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15H01822", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{32, "18/12/2024", "KH.18122024.53", "CAAU8038444", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15H08421", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{33, "18/12/2024", "KH.18122024.54", "FFAU4394380", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15H00521", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{34, "19/12/2024", "KH.19122024.27", "GAOU7010721", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15C-14420", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+		{35, "19/12/2024", "CK.19122024.53", "CSNU8501462", "40HC", "ĐẠI TỪ, THÁI NGUYÊN - HẢI PHÒNG", "29K041.53", 4500000, "", "", "", 652000, 5152000, 412160, 5564160, ""},
+		{36, "20/12/2024", "KH.20122024.29", "SEKU4083291", "40HC", "PHONG KHÊ, BẮC NINH - HẢI PHÒNG", "15C21249", 2700000, "", "", "", "", 2700000, 216000, 2916000, ""},
+	}
 	// Điền dữ liệu vào Sheet2
-	for rowIdx, row := range data {
-		for colIdx, value := range row[:16] { // Chỉ lấy 16 cột đầu (từ STT đến TỔNG THANH TOÁN)
-			cell := fmt.Sprintf("%c%d", 'A'+colIdx, rowIdx+2)
-			if colIdx >= 7 && colIdx <= 14 { // Các cột số
+	for rowIdx, row := range dataSheet2 {
+		for colIdx, value := range row {
+			cell := fmt.Sprintf("%c%d", 'A'+colIdx, dataStartRowShip+rowIdx-2)
+			if colIdx >= 7 && colIdx <= 14 {
 				if floatVal, ok := value.(float64); ok {
-					f.SetCellFloat(sheet2, cell, floatVal, 0, 64)
+					if err := f.SetCellFloat(sheet2, cell, floatVal, 0, 64); err != nil {
+						return fmt.Errorf("failed to set float value in cell %s: %w", cell, err)
+					}
 				} else if strVal, ok := value.(string); ok {
 					if floatVal, err := strconv.ParseFloat(strings.TrimSpace(strVal), 64); err == nil {
-						f.SetCellFloat(sheet2, cell, floatVal, 0, 64)
+						if err := f.SetCellFloat(sheet2, cell, floatVal, 0, 64); err != nil {
+							return fmt.Errorf("failed to parse and set float value in cell %s: %w", cell, err)
+						}
 					} else {
-						f.SetCellValue(sheet2, cell, value)
+						if err := f.SetCellValue(sheet2, cell, value); err != nil {
+							return fmt.Errorf("failed to set value in cell %s: %w", cell, err)
+						}
 					}
 				} else {
-					f.SetCellValue(sheet2, cell, value)
+					if err := f.SetCellValue(sheet2, cell, value); err != nil {
+						return fmt.Errorf("failed to set value in cell %s: %w", cell, err)
+					}
 				}
 			} else {
-				f.SetCellValue(sheet2, cell, value)
+				if err := f.SetCellValue(sheet2, cell, value); err != nil {
+					return fmt.Errorf("failed to set value in cell %s: %w", cell, err)
+				}
 			}
-			// Áp dụng style
-			if colIdx == 1 || colIdx == 6 { // Cột NGÀY và NƠI ĐÓNG / TRẢ
-				f.SetCellStyle(sheet2, cell, cell, styleship.CenterStyle)
-			} else if colIdx >= 7 && colIdx <= 14 { // Các cột số
-				f.SetCellStyle(sheet2, cell, cell, styleship.MoneyStyle)
+			if colIdx == 1 || colIdx == 5 {
+				if err := f.SetCellStyle(sheet2, cell, cell, styleship.CenterStyle); err != nil {
+					return fmt.Errorf("failed to apply center style to cell %s: %w", cell, err)
+				}
+			} else if colIdx >= 7 && colIdx <= 14 {
+				if err := f.SetCellStyle(sheet2, cell, cell, styleship.MoneyStyle); err != nil {
+					return fmt.Errorf("failed to apply money style to cell %s: %w", cell, err)
+				}
 			} else {
-				f.SetCellStyle(sheet2, cell, cell, styleship.CenterStyle)
+				if err := f.SetCellStyle(sheet2, cell, cell, styleship.CenterStyle); err != nil {
+					return fmt.Errorf("failed to apply center style to cell %s: %w", cell, err)
+				}
 			}
 		}
 	}
+	var totalCucVCSheet2, totalCPKhacSheet2, totalCongTienHangSheet2, totalTienThueGTGTSheet2, totalTongThanhToanSheet2, totalNamLaiSheet2 float64
+	for _, row := range dataSheet2 {
+		totalCucVCSheet2 += toFloat(row[7])
+		totalCPKhacSheet2 += toFloat(row[11])
+		totalCongTienHangSheet2 += toFloat(row[12])
+		totalTienThueGTGTSheet2 += toFloat(row[13])
+		totalTongThanhToanSheet2 += toFloat(row[14])
+		totalNamLaiSheet2 += toFloat(row[10])
+	}
+	totalRowSheet2 := dataStartRowShip2 + len(dataSheet2)
+	if err := f.SetCellValue(sheet2, fmt.Sprintf("A%d", totalRowSheet2), "TỔNG"); err != nil {
+		return fmt.Errorf("failed to set total label in A%d: %w", totalRowSheet2, err)
+	}
+	if err := f.MergeCell(sheet2, fmt.Sprintf("A%d", totalRowSheet2), fmt.Sprintf("G%d", totalRowSheet2)); err != nil {
+		return fmt.Errorf("failed to merge cells A%d to N%d: %w", totalRowSheet2, totalRowSheet2, err)
+	}
+	if err := f.SetCellStyle(sheet2, fmt.Sprintf("A%d", totalRowSheet2), fmt.Sprintf("G%d", totalRowSheet2), styleship.ElevenBold); err != nil {
+		return fmt.Errorf("failed to apply bold style to A%d:N%d: %w", totalRowSheet2, totalRowSheet2, err)
+	}
+	f.SetCellFloat(sheet2, fmt.Sprintf("H%d", totalRowSheet2), totalCucVCSheet2, 0, 64)
 
-	// Thêm dòng tổng cho Sheet2
-	totalRowSheet2 := len(data) + 2
-	f.SetCellValue(sheet2, fmt.Sprintf("A%d", totalRowSheet2), "TỔNG")
-	f.MergeCell(sheet2, fmt.Sprintf("A%d", totalRowSheet2), fmt.Sprintf("M%d", totalRowSheet2))
-	f.SetCellStyle(sheet2, fmt.Sprintf("A%d", totalRowSheet2), fmt.Sprintf("M%d", totalRowSheet2), styleship.ElevenBold)
-	f.SetCellFloat(sheet2, fmt.Sprintf("N%d", totalRowSheet2), totalCongTienHang, 0, 64)
+	f.SetCellStyle(sheet2, fmt.Sprintf("H%d", totalRowSheet2), fmt.Sprintf("H%d", totalRowSheet2), styleship.BoldMoneyStyle)
+
+	f.SetCellFloat(sheet2, fmt.Sprintf("K%d", totalRowSheet2), totalNamLaiSheet2, 0, 64)
+	f.SetCellStyle(sheet2, fmt.Sprintf("K%d", totalRowSheet2), fmt.Sprintf("K%d", totalRowSheet2), styleship.BoldMoneyStyle)
+
+	f.SetCellFloat(sheet2, fmt.Sprintf("L%d", totalRowSheet2), totalCPKhacSheet2, 0, 64)
+
+	f.SetCellStyle(sheet2, fmt.Sprintf("L%d", totalRowSheet2), fmt.Sprintf("L%d", totalRowSheet2), styleship.BoldMoneyStyle)
+
+	f.SetCellFloat(sheet2, fmt.Sprintf("N%d", totalRowSheet2), totalTienThueGTGTSheet2, 0, 64)
 	f.SetCellStyle(sheet2, fmt.Sprintf("N%d", totalRowSheet2), fmt.Sprintf("N%d", totalRowSheet2), styleship.BoldMoneyStyle)
-	f.SetCellFloat(sheet2, fmt.Sprintf("O%d", totalRowSheet2), totalTienThueGTGT, 0, 64)
-	f.SetCellStyle(sheet2, fmt.Sprintf("O%d", totalRowSheet2), fmt.Sprintf("O%d", totalRowSheet2), styleship.BoldMoneyStyle)
-	f.SetCellFloat(sheet2, fmt.Sprintf("P%d", totalRowSheet2), totalTongThanhToan, 0, 64)
-	f.SetCellStyle(sheet2, fmt.Sprintf("P%d", totalRowSheet2), fmt.Sprintf("P%d", totalRowSheet2), styleship.BoldMoneyStyle)
 
-	f.SetCellValue(sheet2, "A1", "CÔNG TY CỔ PHẦN LIÊN KẾT VẬN TẢI THÔNG MINH (Smart Link Jsc)")
-	f.SetCellValue(sheet2, "A2", "Địa chỉ: Số 6 tổ 1 Nam Sơn, Phường Đằng Giang, Quận Ngô Quyền, Thành phố Hải Phòng")
-	f.SetCellValue(sheet2, "A3", "VPĐD: Số 19 Bến Láng, Trung Hành 5, Phường Đằng Lâm, Quận Hải An, Thành phố Hải Phòng")
-	f.SetCellValue(sheet2, "A4", "ĐT: 0948898868  Email: Smartlink.haiphong@gmail.com")
-	f.SetCellValue(sheet2, "A6", "BẢNG KÊ SẢN LƯỢNG VẬN CHUYỂN")
-	f.SetCellValue(sheet2, "A7", "NHÀ XE: CHI NHÁNH CÔNG TY CỔ PHẦN GIAO NHẬN VẬN TẢI CON ONG")
-	f.SetCellValue(sheet2, "A8", "Tên viết tắt: BEEHAN")
-	f.SetCellValue(sheet2, "A9", fmt.Sprintf("Hai bên cùng xác nhận sản lượng vận chuyển từ ngày %s", "25-12-2024"))
-	f.SetCellValue(sheet2, fmt.Sprintf("A%d", totalRowSheet2+2), "XÁC NHẬN CỦA NHÀ CUNG CẤP                                    XÁC NHẬN CỦA SMARTLINK")
+	//Thêm dòng tổng cho Sheet2
+	// totalRowSheet2 := len(data) + 2
+	// f.SetCellValue(sheet2, fmt.Sprintf("A%d", totalRowSheet2), "TỔNG")
+	// f.MergeCell(sheet2, fmt.Sprintf("A%d", totalRowSheet2), fmt.Sprintf("M%d", totalRowSheet2))
+	// f.SetCellStyle(sheet2, fmt.Sprintf("A%d", totalRowSheet2), fmt.Sprintf("M%d", totalRowSheet2), styleship.ElevenBold)
+	// f.SetCellFloat(sheet2, fmt.Sprintf("N%d", totalRowSheet2), totalCongTienHang, 0, 64)
+	// f.SetCellStyle(sheet2, fmt.Sprintf("N%d", totalRowSheet2), fmt.Sprintf("N%d", totalRowSheet2), styleship.BoldMoneyStyle)
+	// f.SetCellFloat(sheet2, fmt.Sprintf("O%d", totalRowSheet2), totalTienThueGTGT, 0, 64)
+	// f.SetCellStyle(sheet2, fmt.Sprintf("O%d", totalRowSheet2), fmt.Sprintf("O%d", totalRowSheet2), styleship.BoldMoneyStyle)
+	// f.SetCellFloat(sheet2, fmt.Sprintf("P%d", totalRowSheet2), totalTongThanhToan, 0, 64)
+	// f.SetCellStyle(sheet2, fmt.Sprintf("P%d", totalRowSheet2), fmt.Sprintf("P%d", totalRowSheet2), styleship.BoldMoneyStyle)
 
 	// Đặt Sheet1 là sheet mặc định
 	f.SetActiveSheet(0)
