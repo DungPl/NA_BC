@@ -288,7 +288,7 @@ func initializeStylesShip(f *excelize.File) (*StylesShip, error) {
 		return nil, fmt.Errorf("failed to create no border style: %w", err)
 	}
 	styleship.TealFill, err = f.NewStyle(&excelize.Style{
-		Fill: excelize.Fill{Type: "pattern", Color: []string{"#00CED1"}, Pattern: 1},
+		Fill: excelize.Fill{Type: "pattern", Color: []string{"#e3edf7"}, Pattern: 1},
 		Font: &excelize.Font{Size: 8},
 	})
 	if err != nil {
