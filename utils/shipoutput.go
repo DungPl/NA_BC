@@ -285,7 +285,9 @@ func initializeStylesShip(f *excelize.File) (*StylesShip, error) {
 		return nil, fmt.Errorf("failed to create no border style: %w", err)
 	}
 	styleship.YellowFill, err = f.NewStyle(&excelize.Style{
-		Fill: excelize.Fill{Type: "pattern", Color: []string{"FFFF00"}, Pattern: 1},
+		Font:         &excelize.Font{Size: 8},
+		Fill:         excelize.Fill{Type: "pattern", Color: []string{"FFFF00"}, Pattern: 1},
+		CustomNumFmt: &customFmt,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create no border style: %w", err)
@@ -329,11 +331,12 @@ func initializeStylesShip(f *excelize.File) (*StylesShip, error) {
 		return nil, fmt.Errorf("failed to create no border style: %w", err)
 	}
 	styleship.LightPink, err = f.NewStyle(&excelize.Style{
-		Font: &excelize.Font{Color: "#f5dedd"},
+		Font: &excelize.Font{Size: 8},
 		Fill: excelize.Fill{Type: "pattern", Color: []string{"#f5dedd"}, Pattern: 1},
 		Alignment: &excelize.Alignment{
 			Horizontal: "center",
 		},
+		CustomNumFmt: &customFmt,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create no border style: %w", err)
@@ -660,6 +663,18 @@ func ExportPaymentRequestExcelv3(filename string) error {
 				if err := f.SetCellStyle(sheet1, cell, cell, styleship.CenterStyle); err != nil {
 					return fmt.Errorf("failed to apply center style to cell %s: %w", cell, err)
 				}
+			} else if colIdx == 14 { // CỘNG TIỀN HÀNG
+				if err := f.SetCellStyle(sheet1, cell, cell, styleship.LightPink); err != nil {
+					return fmt.Errorf("failed to apply peach money style to cell %s: %w", cell, err)
+				}
+			} else if colIdx == 15 { // TIỀN THUẾ GTGT
+				if err := f.SetCellStyle(sheet1, cell, cell, styleship.LightPink); err != nil {
+					return fmt.Errorf("failed to apply peach money style to cell %s: %w", cell, err)
+				}
+			} else if colIdx == 16 { // TỔNG THANH TOÁN
+				if err := f.SetCellStyle(sheet1, cell, cell, styleship.YellowFill); err != nil {
+					return fmt.Errorf("failed to apply yellow money style to cell %s: %w", cell, err)
+				}
 			} else if colIdx >= 8 && colIdx <= 16 { // Numeric columns
 				if err := f.SetCellStyle(sheet1, cell, cell, styleship.MoneyStyle); err != nil {
 					return fmt.Errorf("failed to apply money style to cell %s: %w", cell, err)
@@ -776,6 +791,18 @@ func ExportPaymentRequestExcelv3(filename string) error {
 			if colIdx == 1 || colIdx == 5 {
 				if err := f.SetCellStyle(sheet2, cell, cell, styleship.CenterStyle); err != nil {
 					return fmt.Errorf("failed to apply center style to cell %s: %w", cell, err)
+				}
+			} else if colIdx == 12 { // CỘNG TIỀN HÀNG
+				if err := f.SetCellStyle(sheet2, cell, cell, styleship.LightPink); err != nil {
+					return fmt.Errorf("failed to apply peach money style to cell %s: %w", cell, err)
+				}
+			} else if colIdx == 13 { // TIỀN THUẾ GTGT
+				if err := f.SetCellStyle(sheet2, cell, cell, styleship.LightPink); err != nil {
+					return fmt.Errorf("failed to apply peach money style to cell %s: %w", cell, err)
+				}
+			} else if colIdx == 14 { // TỔNG THANH TOÁN
+				if err := f.SetCellStyle(sheet2, cell, cell, styleship.YellowFill); err != nil {
+					return fmt.Errorf("failed to apply yellow money style to cell %s: %w", cell, err)
 				}
 			} else if colIdx >= 7 && colIdx <= 14 {
 				if err := f.SetCellStyle(sheet2, cell, cell, styleship.MoneyStyle); err != nil {
