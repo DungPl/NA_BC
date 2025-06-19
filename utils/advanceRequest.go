@@ -153,6 +153,7 @@ func ExportAdvanceRequest(filename string) error {
 
 	// Signatures
 	pdf.SetXY(20, 160)
+	pdf.SetFont(chosenFont, "B", 10)
 	signatures := []string{"NGƯỜI ĐỀ NGHỊ", "TRƯỞNG BỘ PHẬN", "KẾ TOÁN", "GIÁM ĐỐC"}
 	colWidth := 100.0
 	for _, s := range signatures {
